@@ -124,6 +124,7 @@ footer{color:var(--muted);font-size:13px;text-align:center}
 .btn.sm{padding:8px 11px;font-size:13px;border-radius:9px}
 .tl{position:relative;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;padding-bottom:2px}
 .film{display:block;width:100%;height:46px;border-radius:8px;background:repeating-linear-gradient(90deg,var(--field) 0 40px,var(--line) 40px 41px)}
+.trk{display:block;width:100%;height:6px;margin-top:4px;border-radius:3px;background:var(--field)}
 .lane{position:relative;height:36px;margin-top:6px;border-radius:8px;background:var(--field)}
 .clip{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:space-between;cursor:grab;min-width:28px;touch-action:none}
 .clip.ghost{opacity:.55}
@@ -167,6 +168,7 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
         <div class="stage" id="stage">
           <canvas id="view"></canvas>
           <span class="tag" id="tag">Ejemplo</span>
+          <span class="tag" id="ltag" hidden>Aquí no encontré la superficie</span>
           <div class="h" data-i="0" tabindex="0" role="slider" aria-label="Esquina superior izquierda"></div>
           <div class="h" data-i="1" tabindex="0" role="slider" aria-label="Esquina superior derecha"></div>
           <div class="h" data-i="2" tabindex="0" role="slider" aria-label="Esquina inferior derecha"></div>
@@ -185,11 +187,12 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
         </div>
         <div class="tl" id="tl" aria-label="Línea de tiempo">
           <canvas class="film" id="film"></canvas>
+          <canvas class="trk" id="trk" hidden aria-label="Dónde se encontró la superficie"></canvas>
           <div class="lane"><div class="clip" id="clip"><span class="grip" data-g="in" aria-label="Inicio del letrero"></span><span class="clbl" id="clbl">Letrero</span><span class="grip" data-g="out" aria-label="Fin del letrero"></span></div></div>
           <div class="ph" id="ph"><span></span></div>
         </div>
       </div>
-      <p class="stagehint">Arrastra los puntos naranjas a las esquinas de la superficie. El cuadrado del centro mueve todo. En computador también puedes arrastrar o pegar (Ctrl+V) una foto. Con un video: dale play para verlo con el letrero, toca la película para ir a un momento y arrastra la barra naranja para decidir cuándo aparece y desaparece.</p>
+      <p class="stagehint">Arrastra los puntos naranjas a las esquinas de la superficie. El cuadrado del centro mueve todo. En computador también puedes arrastrar o pegar (Ctrl+V) una foto. Con un video: dale play para verlo con el letrero, toca la película para ir a un momento y arrastra la barra naranja para decidir cuándo aparece y desaparece. Si la cámara se mueve, usa "Seguir la superficie".</p>
     </div>
 
     <div class="panel">
@@ -199,6 +202,18 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
           <span class="btn primary grow">Subir foto o video<input type="file" id="bgfile" accept="image/*,video/*" aria-label="Subir foto o video de fondo"></span>
           <button class="btn" type="button" id="sample">Ver ejemplo</button>
         </div>
+      </section>
+
+      <section class="group" id="trackSec" hidden>
+        <h2 class="gtitle">Cámara en movimiento</h2>
+        <p class="note" id="tnote"></p>
+        <div class="row">
+          <button class="btn primary grow" type="button" id="trackBtn">Seguir la superficie</button>
+          <button class="btn" type="button" id="trackCancel" hidden>Cancelar</button>
+          <button class="btn" type="button" id="trackOff" hidden>Quitar seguimiento</button>
+        </div>
+        <div class="prog" id="tprog" hidden><span id="tprogBar"></span></div>
+        <p class="msg" id="tmsg" role="status"></p>
       </section>
 
       <section class="group">
@@ -286,7 +301,7 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
             <button class="btn" type="button" id="cancelVid" hidden>Cancelar</button>
           </div>
           <div class="prog" id="prog" hidden><span id="progBar"></span></div>
-          <p class="note">Mantiene el audio original. El letrero queda fijo, así que la cámara debe estar quieta.</p>
+          <p class="note" id="vnote">Mantiene el audio original.</p>
         </div>
         <div class="row">
           <button class="btn primary grow" type="button" id="expFull">Foto completa (JPG)</button>
@@ -305,7 +320,8 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
   </div>
 
   <section class="tips" aria-label="Consejos">
-    <div class="tip"><h3>Para videos</h3><p>Sube el video, elige un fotograma donde se vea bien la superficie y ajusta los puntos. "Descargar video" lo devuelve con el letrero puesto y su audio. Funciona si la cámara no se mueve.</p></div>
+    <div class="tip"><h3>Para videos</h3><p>Sube el video, elige un fotograma donde se vea bien la superficie y ajusta los puntos. Si la cámara se mueve, pulsa "Seguir la superficie": Oblicua la busca en cada fotograma, aunque salga del encuadre y vuelva a entrar. "Descargar video" lo devuelve con el letrero puesto y su audio.</p></div>
+    <div class="tip"><h3>Seguir una superficie</h3><p>Funciona mejor con superficies que tienen dibujo o textura (un cuadro, un póster, una portada) que con una pared lisa. Si en algún momento el letrero se desvía, pausa ahí, arrastra los puntos a su sitio y pulsa "Actualizar seguimiento".</p></div>
     <div class="tip"><h3>Que se vea real</h3><p>Con colores oscuros, la fusión automática usa "Impreso": el texto toma la textura y la luz de la superficie. Con colores claros (como blanco sobre un fondo negro) cambia sola a "Normal", porque "Impreso" solo puede oscurecer.</p></div>
     <div class="tip"><h3>Precisión</h3><p>Al arrastrar un punto aparece una lupa. En computador puedes seleccionar un punto y moverlo con las flechas del teclado (Shift para pasos grandes).</p></div>
     <div class="tip"><h3>Privado</h3><p>Todo se procesa en tu navegador. Tus fotos y videos no se suben a ningún servidor.</p></div>
@@ -476,6 +492,53 @@ function warp(img,B,P,src,mode,op){
   }
 }
 
+/* ---------- warp en la GPU (WebGL) ----------
+   Mismo resultado que warp(...,'write'): el contenido deformado sobre fondo transparente, con alfa premultiplicado.
+   Hace falta para el seguimiento, donde la deformación cambia en cada fotograma. Si no hay WebGL, se usa warp(). */
+const GPU=(()=>{
+  let c=null,gl=null,ok=null,uM,uOp,uH,cur=null,maxT=0;
+  function init(){
+    ok=false;
+    try{
+      c=mk(1,1); c.addEventListener('webglcontextlost',()=>{ok=false;});
+      gl=c.getContext('webgl',{premultipliedAlpha:true,preserveDrawingBuffer:true,antialias:false,alpha:true});
+      if(!gl) return;
+      const hp=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.HIGH_FLOAT); if(!hp||hp.precision<23) return;
+      const sh=(t,src)=>{const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error('shader');return o;};
+      const pr=gl.createProgram();
+      gl.attachShader(pr,sh(gl.VERTEX_SHADER,'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'));
+      gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,'precision highp float;uniform mat3 M;uniform float op,H;uniform sampler2D T;'+
+        'void main(){vec3 q=M*vec3(gl_FragCoord.x,H-gl_FragCoord.y,1.);if(q.z<=0.)discard;vec2 uv=q.xy/q.z;'+
+        'if(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.)discard;gl_FragColor=texture2D(T,uv)*op;}'));
+      gl.linkProgram(pr); if(!gl.getProgramParameter(pr,gl.LINK_STATUS)) return; gl.useProgram(pr);
+      gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      const la=gl.getAttribLocation(pr,'a'); gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la,2,gl.FLOAT,false,0,0);
+      uM=gl.getUniformLocation(pr,'M'); uOp=gl.getUniformLocation(pr,'op'); uH=gl.getUniformLocation(pr,'H');
+      gl.bindTexture(gl.TEXTURE_2D,gl.createTexture());
+      [[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE],[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR]].forEach(([k,v])=>gl.texParameteri(gl.TEXTURE_2D,k,v));
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+      maxT=gl.getParameter(gl.MAX_TEXTURE_SIZE); ok=true;
+    }catch(e){ ok=false; }
+  }
+  return {
+    /** Canvas W×H con src deformado sobre las esquinas P (píxeles), o null si la GPU no está disponible. */
+    draw(P,W,H,src,op){
+      if(ok===null) init();
+      if(!ok||gl.isContextLost()||Math.max(src.w,src.h,W,H)>maxT) return null;
+      if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+      gl.viewport(0,0,W,H);
+      if(cur!==src){ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,src.w,src.h,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(src.d.buffer,src.d.byteOffset,src.d.length)); cur=src; }
+      const M=inv3(sq2q(P)), cx=(P[0].x+P[1].x+P[2].x+P[3].x)/4, cy=(P[0].y+P[1].y+P[2].y+P[3].y)/4;
+      const sg=M[6]*cx+M[7]*cy+M[8]<0?-1:1; // así q.z>0 dentro de la superficie y no aparece un reflejo al otro lado del horizonte
+      gl.uniformMatrix3fv(uM,false,[M[0],M[3],M[6],M[1],M[4],M[7],M[2],M[5],M[8]].map(v=>v*sg));
+      gl.uniform1f(uOp,op); gl.uniform1f(uH,H);
+      gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      return c;
+    },
+    forget(){ cur=null; }
+  };
+})();
+
 /* ---------- fusión ---------- */
 const lum=hex=>{const n=parseInt(hex.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});return .2126*c[0]+.7152*c[1]+.0722*c[2];};
 /** "Impreso" (multiplicar) solo oscurece: con texto claro no se vería nada, así que en automático usa Normal. */
@@ -487,7 +550,7 @@ function blendMode(){
 }
 
 /* ---------- view ---------- */
-let cssW=0,cssH=0,raf=0,pvKey='',pvSrc=null,layerKey='';
+let cssW=0,cssH=0,raf=0,pvKey='',pvSrc=null,layerKey='',layerCv=null;
 const LAYER=mk(1,1), LCTX=LAYER.getContext('2d',{willReadFrequently:true});
 function layout(){
   const maxW=stagebox.clientWidth-20;
@@ -498,22 +561,27 @@ function layout(){
   stage.style.width=cssW+'px'; stage.style.height=cssH+'px';
   const dpr=Math.min(window.devicePixelRatio||1,2);
   view.width=Math.round(cssW*dpr); view.height=Math.round(cssH*dpr);
-  pvKey=''; layerKey=''; render();
+  pvKey=''; layerKey=''; render(); drawTrk();
 }
 function render(){ if(!raf) raf=requestAnimationFrame(draw); }
 function contentKey(P){
   return S.mode==='image'?'img'+(S.imgSrc?S.imgSrc.w+'x'+S.imgSrc.h:0):[Math.round(quadInfo(P).wide/8),Math.round(quadInfo(P).aspect*50),$('txt').value,$('sub').value,$('subsize').value,$('subfont').value,$('subcaps').checked,$('font').value,$('size').value,$('vpos').value,S.color,S.align,$('shadow').checked].join('|');
 }
-/** Dibuja el contenido deformado en LAYER (transparente, del tamaño de la vista). Solo cuando algo cambió. */
-function updateLayer(P,W,H){
-  const key=contentKey(P);
-  if(key!==pvKey){ pvSrc=getSource(P,1600); pvKey=key; layerKey=''; }
+/** Devuelve un canvas (transparente, del tamaño de la vista) con el contenido deformado. Solo lo recalcula cuando algo cambió.
+    SP: esquinas que definen la forma del contenido (con seguimiento, las del momento marcado, para que el texto no cambie). */
+function updateLayer(P,W,H,SP){
+  const key=contentKey(SP);
+  if(key!==pvKey){ pvSrc=getSource(SP,1600); pvKey=key; layerKey=''; }
   const lk=key+'|'+P.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(';')+'|'+W+'x'+H+'|'+$('op').value;
-  if(lk===layerKey) return;
-  if(LAYER.width!==W||LAYER.height!==H){ LAYER.width=W; LAYER.height=H; } else LCTX.clearRect(0,0,W,H);
-  const B=bbox(P,W,H);
-  if(B.w>0&&B.h>0){ const img=LCTX.createImageData(B.w,B.h); warp(img,B,P,pvSrc,'write',$('op').value/100); LCTX.putImageData(img,B.x0,B.y0); }
-  layerKey=lk;
+  if(lk===layerKey&&layerCv) return layerCv;
+  layerCv=GPU.draw(P,W,H,pvSrc,$('op').value/100);
+  if(!layerCv){
+    if(LAYER.width!==W||LAYER.height!==H){ LAYER.width=W; LAYER.height=H; } else LCTX.clearRect(0,0,W,H);
+    const B=bbox(P,W,H);
+    if(B.w>0&&B.h>0){ const img=LCTX.createImageData(B.w,B.h); warp(img,B,P,pvSrc,'write',$('op').value/100); LCTX.putImageData(img,B.x0,B.y0); }
+    layerCv=LAYER;
+  }
+  layerKey=lk; return layerCv;
 }
 /** Opacidad del letrero en el segundo t según la línea de tiempo (1 si no hay video). */
 function timeAlpha(t){
@@ -529,20 +597,23 @@ function draw(){
   vctx.globalCompositeOperation='source-over'; vctx.globalAlpha=1;
   vctx.clearRect(0,0,W,H);
   try{ vctx.drawImage(S.bg,0,0,W,H); }catch(e){}
-  const P=S.q.map(p=>({x:p.x*W,y:p.y*H}));
-  const playing=S.video&&!S.video.el.paused;
+  const V=S.video, playing=V&&!V.el.paused;
+  let lost=false;
+  if(V&&V.track&&!drag){ const q=quadAt(curT()); if(q) S.q=q.map(p=>({...p})); else lost=true; }
+  $('ltag').hidden=!lost||playing;
+  const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), SP=shapeQ().map(p=>({x:p.x*W,y:p.y*H}));
   try{
-    updateLayer(P,W,H);
     let a=1;
-    if(S.video){ a=timeAlpha(S.video.el.currentTime); if(!playing&&a<.3) a=.3; }
-    if(a>0){ vctx.globalAlpha=a; vctx.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; vctx.drawImage(LAYER,0,0); }
+    if(V){ a=timeAlpha(V.el.currentTime); if(!playing&&a<.3) a=.3; }
+    if(lost) a=0;
+    if(a>0){ const L=updateLayer(P,W,H,SP); vctx.globalAlpha=a; vctx.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; vctx.drawImage(L,0,0); }
     vctx.globalCompositeOperation='source-over'; vctx.globalAlpha=1;
     if(drawErr){ drawErr=false; setMsg(''); }
   }catch(e){
     vctx.globalCompositeOperation='source-over'; vctx.globalAlpha=1;
     pvKey=''; layerKey=''; if(!drawErr){ drawErr=true; setMsg('El navegador se quedó sin memoria para la vista previa. Recarga la página si no vuelve a aparecer.','bad'); }
   }
-  if($('outline').checked&&!playing){
+  if($('outline').checked&&!playing&&!lost){
     vctx.save(); vctx.strokeStyle='rgba(255,169,77,.95)'; vctx.setLineDash([8,6]); vctx.lineWidth=Math.max(1.5,W/450);
     poly(vctx,P); vctx.stroke(); vctx.restore();
   }
@@ -571,13 +642,13 @@ handles.forEach(h=>{
     else{ const s=drag.start[+drag.i]; S.q[+drag.i]={x:cl(s.x+dx),y:cl(s.y+dy)}; }
     render();
   });
-  const end=()=>{drag=null;loupe.hidden=true;};
+  const end=()=>{ if(drag) setKey(); drag=null; loupe.hidden=true; };
   h.addEventListener('pointerup',end); h.addEventListener('pointercancel',end);
   h.addEventListener('keydown',e=>{
     const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key]; if(!k)return;
     e.preventDefault(); const n=e.shiftKey?10:1, mv=p=>({x:cl(p.x+k[0]*n/cssW),y:cl(p.y+k[1]*n/cssH)});
     if(h.dataset.i==='m') S.q=S.q.map(mv); else S.q[+h.dataset.i]=mv(S.q[+h.dataset.i]);
-    render();
+    setKey(); render();
   });
 });
 function drawLoupe(){
@@ -607,7 +678,7 @@ function loadBgFile(f){
 }
 $('bgfile').addEventListener('change',e=>{loadBgFile(e.target.files[0]); e.target.value='';});
 $('sample').onclick=()=>{useSample(); setMsg('');};
-$('resetq').onclick=()=>{S.q=S.isSample?S.sampleQ.map(p=>({...p})):defaultQ(); render();};
+$('resetq').onclick=()=>{ if(S.video) clearTrack(); S.q=S.isSample?S.sampleQ.map(p=>({...p})):defaultQ(); render(); };
 let dragDepth=0;
 stagebox.addEventListener('dragenter',e=>{e.preventDefault();dragDepth++;$('drop').hidden=false;});
 stagebox.addEventListener('dragover',e=>e.preventDefault());
@@ -626,6 +697,7 @@ const loadMB=async()=>MB||(MB=await import('./vendor/mediabunny.min.js'));
 function dropVideo(){
   if(S.video){ const V=S.video; V.dead=true; try{V.el.pause();V.el.removeAttribute('src');V.el.load();V.el.remove();URL.revokeObjectURL(V.url);}catch(e){} }
   S.video=null; $('editor').hidden=true; $('vidExp').hidden=true; stage.classList.remove('playing');
+  $('ltag').hidden=true; $('tmsg').textContent=''; updTrackUI(); drawTrk();
   $('expFull').textContent='Foto completa (JPG)'; $('expFull').classList.add('primary');
 }
 function once(el,ok,bad){return new Promise((res,rej)=>{const a=()=>{c();res();},b=()=>{c();rej(new Error(bad));},c=()=>{el.removeEventListener(ok,a);el.removeEventListener('error',b);};el.addEventListener(ok,a);el.addEventListener('error',b);});}
@@ -645,8 +717,10 @@ async function loadVideo(f){
     if(!isFinite(dur)){ try{ const M=await loadMB(); const inp=new M.Input({source:new M.BlobSource(f),formats:M.ALL_FORMATS}); dur=await inp.computeDuration(); }catch(e){ dur=0; } }
     try{ await withTimeout(el.play(),2500); }catch(e){} try{ el.pause(); }catch(e){}
     dropVideo();
-    const V={file:f,url,el,dur:dur||0,t0:0,t1:dur||0};
+    const V={file:f,url,el,dur:dur||0,t0:0,t1:dur||0,track:null,keys:[],shape:null,stale:false,tracking:null,mt:null};
     S.video=V;
+    // Momento exacto del fotograma en pantalla mientras se reproduce, para que el letrero no vaya un fotograma tarde.
+    if(el.requestVideoFrameCallback){ const vf=(now,m)=>{ if(S.video!==V) return; V.mt=m.mediaTime; if(V.track) render(); el.requestVideoFrameCallback(vf); }; el.requestVideoFrameCallback(vf); }
     S.bgW=el.videoWidth; S.bgH=el.videoHeight; S.isSample=false; S.q=defaultQ(); S.bg=el;
     el.addEventListener('play',()=>{ stage.classList.add('playing'); setPlayIcon(true); render(); });
     el.addEventListener('pause',()=>{ stage.classList.remove('playing'); setPlayIcon(false); render(); });
@@ -656,7 +730,7 @@ async function loadVideo(f){
     $('vq').value=Math.min(S.bgW,S.bgH)>1080?'1080':'0';
     $('editor').hidden=false; $('vidExp').hidden=false; $('expFull').textContent='Este fotograma (JPG)'; $('expFull').classList.remove('primary');
     $('tag').hidden=true; $('result').hidden=true;
-    layout();
+    updTrackUI(); layout();
     setMsg('Video cargado. Ubica los 4 puntos, dale play para verlo y ajusta en la barra naranja cuándo aparece el letrero.','ok');
     await seekTo(Math.min(.05,V.dur/2));
     buildFilm(V);
@@ -752,22 +826,117 @@ async function buildFilm(V){
     for await (const w of sink.canvasesAtTimestamps(ts)){ if(V.dead) return; if(w) g.drawImage(w.canvas,i*tw,0,tw,H); i++; }
   }catch(e){}
 }
+/* ---------- seguimiento de la superficie (cámara en movimiento) ---------- */
+let TRK=null;
+const loadTRK=async()=>TRK||(TRK=await import('./tracker.js'));
+const curT=()=>{ const V=S.video; if(!V) return 0; return !V.el.paused&&V.mt!=null?V.mt:V.el.currentTime; };
+/** Índice del fotograma que se ve en el segundo t (el último que empieza antes de t). */
+function trkIdx(T,t){ let lo=0,hi=T.length-1; if(hi<0) return -1; while(lo<hi){ const m=(lo+hi+1)>>1; if(T[m]<=t+1e-4) lo=m; else hi=m-1; } return lo; }
+const sameFrame=(a,b)=>{ const V=S.video; return V&&V.track?trkIdx(V.track.t,a)===trkIdx(V.track.t,b):Math.abs(a-b)<1e-3; };
+/** Esquinas de la superficie en el segundo t, o null si ahí no se encontró. Las correcciones a mano mandan. */
+function quadAt(t){
+  const V=S.video, tr=V&&V.track; if(!tr) return null;
+  const k=V.keys.find(k=>sameFrame(k.t,t)); if(k) return k.q;
+  const i=trkIdx(tr.t,t); if(i<0||Number.isNaN(tr.q[i*8])) return null;
+  const q=[]; for(let c=0;c<4;c++) q.push({x:tr.q[i*8+2*c],y:tr.q[i*8+2*c+1]}); return q;
+}
+/** Esquinas que definen la forma del contenido: con seguimiento, las del primer momento marcado. */
+const shapeQ=()=>S.video&&S.video.track&&S.video.shape?S.video.shape:S.q;
+/** Tras mover los puntos con un seguimiento hecho: ese fotograma queda como corrección. */
+function setKey(){
+  const V=S.video; if(!V||!V.track) return;
+  const t=V.el.currentTime;
+  const old=V.keys.find(k=>sameFrame(k.t,t)), q=S.q.map(p=>({...p}));
+  V.keys=V.keys.filter(k=>k!==old); V.keys.push({t,q,main:!!(old&&old.main)}); V.keys.sort((a,b)=>a.t-b.t);
+  if(old&&old.main) V.shape=q;
+  V.stale=true; V.kv=(V.kv||0)+1; updTrackUI(); drawTrk();
+}
+function clearTrack(){ const V=S.video; if(!V) return; if(V.tracking) V.tracking.cancel=true; V.track=null; V.keys=[]; V.shape=null; V.stale=false; $('tmsg').textContent=''; updTrackUI(); drawTrk(); render(); }
+function setTMsg(t,cls){ const m=$('tmsg'); m.textContent=t; m.className='msg'+(cls?' '+cls:''); }
+function updTrackUI(){
+  const V=S.video; $('trackSec').hidden=!V; if(!V) return;
+  const busy=!!V.tracking, has=!!V.track, n=V.keys.length-1;
+  $('trackBtn').hidden=busy||(has&&!V.stale); $('trackCancel').hidden=!busy; $('tprog').hidden=!busy; $('trackOff').hidden=busy||!has;
+  $('trackBtn').textContent=has?'Actualizar seguimiento':'Seguir la superficie';
+  $('tnote').textContent=!has?'Si el celular se mueve, Oblicua puede seguir la superficie sola. Pausa en un momento donde se vea bien, lleva los 4 puntos a sus esquinas y pulsa el botón.'
+    :V.stale?'Corregiste '+(n>1?n+' momentos':'un momento')+'. Pulsa "Actualizar seguimiento" para aplicarlo a todo el video.'
+    :'El letrero sigue a la superficie. Si en algún momento se desvía, pausa ahí, arrastra los puntos a su sitio y actualiza.';
+  $('vnote').textContent='Mantiene el audio original.'+(has?' El letrero sigue a la superficie mientras la cámara se mueve.':' Si la cámara se mueve, usa "Seguir la superficie" (arriba).');
+  $('expVid').disabled=busy;
+}
+/** Franja bajo la película: en verde dónde se encontró la superficie; las marcas son los momentos marcados a mano. */
+function drawTrk(){
+  const V=S.video, c=$('trk');
+  if(!V||!V.track||!V.dur){ c.hidden=true; return; }
+  c.hidden=false;
+  const dpr=Math.min(window.devicePixelRatio||1,2), W=Math.max(1,Math.round(c.clientWidth*dpr)), H=Math.round(6*dpr);
+  c.width=W; c.height=H; const g=c.getContext('2d'), cs=getComputedStyle(document.documentElement);
+  const T=V.track.t, Q=V.track.q, n=T.length, x=t=>Math.max(0,Math.min(W,t/V.dur*W));
+  g.fillStyle=cs.getPropertyValue('--ok').trim()||'#2b8a3e';
+  for(let i=0;i<n;){ if(Number.isNaN(Q[i*8])){ i++; continue; } let j=i; while(j+1<n&&!Number.isNaN(Q[(j+1)*8])) j++;
+    const a=x(T[i]), b=j+1<n?x(T[j+1]):W; g.fillRect(a,0,Math.max(1,b-a),H); i=j+1; }
+  g.fillStyle=cs.getPropertyValue('--ink').trim()||'#000';
+  V.keys.forEach(k=>g.fillRect(x(k.t)-dpr,0,2*dpr,H));
+}
+/** Analiza el video para seguir la superficie. Devuelve true si quedó listo. */
+async function runTrack(){
+  const V=S.video; if(!V||V.tracking) return false;
+  if(!('VideoDecoder' in window)){ setTMsg('Este navegador no puede analizar videos. Usa Chrome, Edge o Safari actualizados.','bad'); return false; }
+  if(!V.el.paused) V.el.pause();
+  if(!V.track){ V.keys=[{t:V.el.currentTime,q:S.q.map(p=>({...p})),main:true}]; V.shape=V.keys[0].q; }
+  const job={cancel:false}; V.tracking=job; updTrackUI(); $('tprogBar').style.width='0%';
+  setTMsg('Analizando el video…');
+  let ok=false;
+  try{
+    const [M,T]=await Promise.all([loadMB(),loadTRK()]);
+    // el primer momento marcado va primero: define la superficie para todos los demás
+    const keys=[...V.keys].sort((a,b)=>b.main-a.main).map(k=>({t:k.t,q:k.q.map(p=>({...p}))})), kv=V.kv, t0=performance.now();
+    const res=await T.analyze({M,file:V.file,keys,cancelled:()=>job.cancel||V.dead,
+      onProgress:p=>{ $('tprogBar').style.width=Math.round(p*100)+'%';
+        const el=(performance.now()-t0)/1000, left=p>.04?el*(1-p)/p:0;
+        setTMsg('Analizando el video… '+Math.round(p*100)+' %'+(left>8?' (unos '+(left<90?Math.round(left/5)*5+' s':Math.round(left/60)+' min')+')':'')); }});
+    if(V.dead||job.cancel) throw Object.assign(new Error('cancel'),{name:'Cancel'});
+    V.track=res; V.stale=V.kv!==kv; ok=true;
+    const pct=Math.round(res.found*100);
+    if(res.found<.03) setTMsg('No pude seguir la superficie. Prueba marcando las esquinas en otro momento, donde se vea más nítida y de frente.','bad');
+    else setTMsg('Listo: la superficie aparece en el '+pct+' % del video (la franja verde bajo la película). Dale play para revisarlo.','ok');
+  }catch(e){
+    const name=e&&e.name||'';
+    if(/Cancel/i.test(name)) setTMsg('Cancelado.');
+    else if(e&&e.message==='nodec') setTMsg('Tu navegador no puede leer el formato de este video. Prueba en Safari o Chrome, o convierte el video a MP4.','bad');
+    else setTMsg('No se pudo analizar el video. Prueba con un video más corto.','bad');
+    if(!V.track){ V.keys=[]; V.shape=null; }
+  }
+  if(V.tracking===job) V.tracking=null;
+  updTrackUI(); drawTrk(); render();
+  return ok;
+}
+$('trackBtn').onclick=runTrack;
+$('trackCancel').onclick=()=>{ const V=S.video; if(V&&V.tracking) V.tracking.cancel=true; };
+$('trackOff').onclick=()=>{ clearTrack(); setTMsg('Seguimiento quitado: el letrero vuelve a quedarse fijo.'); };
+
 let conv=null;
 function evenDims(W,H,cap){const s=cap?Math.min(1,cap/Math.min(W,H)):1;const ev=v=>Math.max(2,Math.round(v*s/2)*2);return [ev(W),ev(H)];}
 async function exportVideo(){
   const V=S.video; if(!V) return;
   if(!('VideoEncoder' in window)||!('VideoFrame' in window)){ setMsg('Este navegador no puede crear videos. Usa Chrome, Edge o Safari actualizados. Mientras, puedes descargar "Solo el contenido".','bad'); return; }
   if(!V.el.paused) V.el.pause();
-  const btns=[$('expVid'),$('expFull'),$('expOnly')]; btns.forEach(b=>b.disabled=true);
+  if(V.tracking) return;
+  if(V.track&&V.stale&&!(await runTrack())) return;
+  const btns=[$('expVid'),$('expFull'),$('expOnly'),$('trackBtn')]; btns.forEach(b=>b.disabled=true);
   $('cancelVid').hidden=false; $('prog').hidden=false; $('progBar').style.width='0%'; $('result').hidden=true;
   setMsg('Preparando…');
   try{
     const M=await loadMB(); await loadFont();
     const [W,H]=evenDims(S.bgW,S.bgH,+$('vq').value);
-    // Capa con el contenido ya deformado, calculada una sola vez.
-    const layer=mk(W,H), lg=layer.getContext('2d',{willReadFrequently:true});
-    const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(P,4096), B=bbox(P,W,H);
-    if(B.w>0&&B.h>0){ const img=lg.createImageData(B.w,B.h); warp(img,B,P,src,'write',$('op').value/100); lg.putImageData(img,B.x0,B.y0); }
+    // Capa con el contenido deformado: una sola vez si la cámara está quieta, en cada fotograma si hay seguimiento.
+    const layer=mk(W,H), lg=layer.getContext('2d',{willReadFrequently:true}), op=$('op').value/100, tracked=!!V.track;
+    const px=q=>q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(px(shapeQ()),4096);
+    const cpu=P=>{ lg.clearRect(0,0,W,H); const B=bbox(P,W,H);
+      if(B.w>0&&B.h>0){ const img=lg.createImageData(B.w,B.h); warp(img,B,P,src,'write',op); lg.putImageData(img,B.x0,B.y0); }
+      return layer; };
+    const paint=P=>GPU.draw(P,W,H,src,op)||cpu(P);
+    const still=tracked?null:cpu(px(S.q));
     const mult=blendMode()==='multiply';
     const alphaAt=timeAlpha;
     const c=mk(W,H), g=c.getContext('2d');
@@ -781,8 +950,9 @@ async function exportVideo(){
       process:sample=>{
         g.globalCompositeOperation='source-over'; g.globalAlpha=1;
         sample.draw(g,0,0,W,H);
-        const a=alphaAt(sample.timestamp);
-        if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(layer,0,0); }
+        let a=alphaAt(sample.timestamp), L=still;
+        if(a>0&&tracked){ const q=quadAt(sample.timestamp); if(q) L=paint(px(q)); else a=0; }
+        if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(L,0,0); }
         return c;
       }}});
     if(!conv.isValid){
@@ -805,6 +975,7 @@ async function exportVideo(){
     else setMsg('No se pudo crear el video. Prueba con 720p o con un video más corto.','bad');
   }
   conv=null; btns.forEach(b=>b.disabled=false); $('cancelVid').hidden=true; $('prog').hidden=true;
+  GPU.forget(); layerKey=''; updTrackUI(); render();
 }
 $('expVid').onclick=exportVideo;
 $('cancelVid').onclick=()=>{ if(conv) conv.cancel(); };
@@ -859,7 +1030,8 @@ async function exportIt(full){
   try{
     let W=S.bgW,H=S.bgH; const cap=6000/Math.max(W,H); if(cap<1){W=Math.round(W*cap);H=Math.round(H*cap);}
     const c=mk(W,H), g=c.getContext('2d',{willReadFrequently:true});
-    const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(P,4096), B=bbox(P,W,H);
+    const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(shapeQ().map(p=>({x:p.x*W,y:p.y*H})),4096);
+    const B=S.video&&S.video.track&&!quadAt(curT())?{w:0,h:0}:bbox(P,W,H); // sin la superficie en este fotograma, sin letrero
     if(full){
       g.drawImage(S.bg,0,0,W,H);
       if(B.w>0&&B.h>0){ const img=g.getImageData(B.x0,B.y0,B.w,B.h); warp(img,B,P,src,blendMode(),$('op').value/100); g.putImageData(img,B.x0,B.y0); }

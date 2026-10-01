@@ -13,6 +13,7 @@ Nació para poner el título de mis covers de piano sobre el atril en los videos
 - Título y subtítulo opcional, cada uno con su propia fuente, y opción de mayúsculas.
 - Modo imagen: pon un logo o cualquier PNG sobre la superficie.
 - **Editor de video**: reproduces el video con el letrero encima, marcas en una línea de tiempo con miniaturas cuándo aparece y desaparece (con transición suave) y descargas el MP4 con el audio original.
+- **Cámara en movimiento**: marcas las esquinas en un momento del video y Oblicua sigue la superficie en cada fotograma, aunque salga del encuadre y vuelva a entrar. Si en algún momento se desvía, corriges ahí los puntos y se reparte la corrección por el resto del video.
 - Exporta la foto completa o solo el contenido en **PNG transparente**, listo para un editor de video.
 - Lupa de precisión para mover las esquinas, arrastrar y soltar, y pegar desde el portapapeles.
 - Todo corre en el navegador: las fotos y videos nunca salen del dispositivo.
@@ -23,7 +24,9 @@ Nació para poner el título de mis covers de piano sobre el atril en los videos
 - **Remuestreo bilineal con alfa premultiplicado**, para que los bordes del texto queden limpios.
 - **Fusión «multiplicar»**, para que el texto parezca impreso sobre la superficie y no pegado encima.
 - **Video con WebCodecs**: el contenido deformado se calcula una sola vez como capa transparente y se compone sobre cada fotograma en canvas; [Mediabunny](https://mediabunny.dev) se encarga de leer el archivo, decodificar, codificar a MP4 (H.264 cuando el navegador lo permite) y copiar el audio sin recomprimirlo. Respeta la rotación de los videos grabados en vertical.
-- Sin build: un `index.html` con HTML, CSS y JavaScript, más Mediabunny en `vendor/`, que solo se descarga al exportar un video.
+- **Seguimiento de superficies** (`tracker.js`, sin dependencias): el video se analiza a 640 px, hacia adelante y hacia atrás. Lucas-Kanade piramidal sigue puntos de la superficie de un fotograma al siguiente, RANSAC estima la homografía descartando lo que no está en el plano (gente, muebles), y cada fotograma se ajusta contra la imagen de referencia para que no se acumule error. Cuando la superficie sale del encuadre, descriptores binarios estilo ORB la vuelven a encontrar al entrar. Las dos pasadas se combinan y se suavizan con Savitzky-Golay.
+- Con seguimiento, la deformación cambia en cada fotograma, así que se hace en la GPU con WebGL (con la versión en JavaScript como respaldo).
+- Sin build: un `index.html` con HTML, CSS y JavaScript, más `tracker.js` y Mediabunny en `vendor/`, que solo se descargan al usarlos.
 
 ## Uso local
 
