@@ -15,6 +15,7 @@ Nació para poner el título de mis covers de piano sobre el atril en los videos
 - **Editor de video**: reproduces el video con el letrero encima, marcas en una línea de tiempo con miniaturas cuándo aparece y desaparece (con transición suave) y descargas el MP4 con el audio original.
 - **Cámara en movimiento**: marcas las esquinas en un momento del video y Oblicua sigue la superficie en cada fotograma, aunque salga del encuadre y vuelva a entrar. Si en algún momento se desvía, corriges ahí los puntos y se reparte la corrección por el resto del video.
 - Exporta la foto completa o solo el contenido en **PNG transparente**, listo para un editor de video.
+- **Grabar desde la página** en 1080p o 4K con bitrate alto y el micrófono sin filtros de voz (para que la música suene bien). La cámara que ofrece el selector de archivos del celular graba en baja calidad.
 - Lupa de precisión para mover las esquinas, arrastrar y soltar, y pegar desde el portapapeles.
 - Todo corre en el navegador: las fotos y videos nunca salen del dispositivo.
 
