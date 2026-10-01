@@ -229,6 +229,7 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
           <span class="btn primary grow">Subir foto o video<input type="file" id="bgfile" accept="image/*,video/*" aria-label="Subir foto o video de fondo"></span>
           <button class="btn" type="button" id="sample">Ver ejemplo</button>
         </div>
+        <p class="note" id="iosNote" hidden></p>
       </section>
 
       <section class="group" id="st2">
@@ -755,6 +756,19 @@ document.addEventListener('paste',e=>{
 });
 
 
+/* ---------- iPhone: la cámara del navegador graba en baja calidad ---------- */
+// Al grabar desde la página, iOS no usa los ajustes de la app Cámara (4K, etc.) y además comprime el video.
+// La página no puede pedir más calidad, así que le explicamos a la persona cómo traer el video original.
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const IOS_TIP='En iPhone, para la mejor calidad: graba con la app Cámara (así usa tu ajuste, por ejemplo 4K) y luego súbelo aquí. Si iOS lo comprime al elegirlo desde Fotos, guárdalo primero en Archivos ("Compartir" → "Guardar en Archivos") y elígelo con "Elegir archivo".';
+function iosHint(short){
+  const n=$('iosNote'); if(!isIOS){ n.hidden=true; return; }
+  n.hidden=false; n.style.color='';
+  n.textContent=IOS_TIP;
+  if(short&&short<1080){ n.textContent='Este video llegó en baja resolución ('+short+'p). '+IOS_TIP; n.style.color='var(--bad)'; }
+}
+iosHint(0);
+
 /* ---------- video ---------- */
 const fmtT=t=>{t=Math.max(0,t||0);const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+(Math.floor(s*10)/10).toFixed(1);};
 let MB=null;
@@ -788,6 +802,7 @@ async function loadVideo(f){
     // Momento exacto del fotograma en pantalla mientras se reproduce, para que el letrero no vaya un fotograma tarde.
     if(el.requestVideoFrameCallback){ const vf=(now,m)=>{ if(S.video!==V) return; V.mt=m.mediaTime; if(V.track) render(); el.requestVideoFrameCallback(vf); }; el.requestVideoFrameCallback(vf); }
     S.bgW=el.videoWidth; S.bgH=el.videoHeight; S.isSample=false; S.q=defaultQ(); S.bg=el;
+    iosHint(Math.min(S.bgW,S.bgH));
     el.addEventListener('play',()=>{ stage.classList.add('playing'); setPlayIcon(true); render(); });
     el.addEventListener('pause',()=>{ stage.classList.remove('playing'); setPlayIcon(false); render(); });
     el.addEventListener('ended',()=>{ stage.classList.remove('playing'); setPlayIcon(false); render(); });
