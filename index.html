@@ -374,6 +374,10 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
             <label class="check"><input type="checkbox" id="fade" checked> Aparecer suave</label>
             <select id="vq" aria-label="Resolución del video"><option value="0" selected>Calidad original</option><option value="1080">1080p (más liviano)</option><option value="720">720p (más rápido)</option></select>
           </div>
+          <div class="two">
+            <select id="vfmt" aria-label="Formato del video"><option value="0">Formato original</option><option value="0.5625">Vertical 9:16 (Reels, TikTok, Shorts)</option><option value="1">Cuadrado 1:1</option><option value="1.7778">Horizontal 16:9</option></select>
+            <div class="field" id="vcropBox" hidden><label class="l" for="vcrop">Encuadre</label><input type="range" id="vcrop" min="0" max="100" value="50"></div>
+          </div>
           <div class="row">
             <button class="btn primary grow" type="button" id="expVid">Descargar video (MP4)</button>
             <button class="btn" type="button" id="cancelVid" hidden>Cancelar</button>
@@ -964,6 +968,8 @@ function draw(){
     vctx.globalCompositeOperation='source-over'; vctx.globalAlpha=1;
     pvKey=''; layerKey=''; if(!drawErr){ drawErr=true; setMsg('El navegador se quedó sin memoria para la vista previa. Recarga la página si no vuelve a aparecer.','bad'); }
   }
+  if(V&&+$('vfmt').value){ const r=cropRect(W,H); vctx.fillStyle='rgba(0,0,0,.55)';
+    vctx.fillRect(0,0,W,r.y); vctx.fillRect(0,r.y+r.h,W,H-r.y-r.h); vctx.fillRect(0,r.y,r.x,r.h); vctx.fillRect(r.x+r.w,r.y,W-r.x-r.w,r.h); }
   if($('outline').checked&&!playing&&!lost){
     vctx.save(); vctx.strokeStyle='rgba(255,169,77,.95)'; vctx.setLineDash([8,6]); vctx.lineWidth=Math.max(1.5,W/450);
     poly(vctx,P); vctx.stroke(); vctx.restore();
@@ -1444,6 +1450,21 @@ $('trackOff').onclick=()=>{ clearTrack(); setTMsg('Seguimiento quitado: el letre
 
 let conv=null;
 function evenDims(W,H,cap){const s=cap?Math.min(1,cap/Math.min(W,H)):1;const ev=v=>Math.max(2,Math.round(v*s/2)*2);return [ev(W),ev(H)];}
+/** Recorte del formato elegido (vertical, cuadrado…) dentro de un fotograma W×H: {x,y,w,h} en píxeles pares. */
+function cropRect(W,H){
+  const a=+$('vfmt').value, o=$('vcrop').value/100; if(!a) return {x:0,y:0,w:W,h:H};
+  const ev=v=>Math.max(2,Math.round(v/2)*2);
+  if(W/H>a){ const w=Math.min(W,ev(H*a)); return {x:Math.round((W-w)*o),y:0,w,h:H}; }
+  const h=Math.min(H,ev(W/a)); return {x:0,y:Math.round((H-h)*o),w:W,h};
+}
+/** Al elegir un formato, el encuadre se centra en el letrero. */
+function centerCrop(){
+  const a=+$('vfmt').value; $('vcropBox').hidden=!a; if(!a){ render(); return; }
+  const cx=S.q.reduce((s,p)=>s+p.x,0)/4, cy=S.q.reduce((s,p)=>s+p.y,0)/4, W=S.bgW, H=S.bgH, r=cropRect(W,H);
+  const o=r.w<W?(cx*W-r.w/2)/(W-r.w):r.h<H?(cy*H-r.h/2)/(H-r.h):.5;
+  $('vcrop').value=Math.round(Math.max(0,Math.min(1,o))*100); render();
+}
+$('vfmt').addEventListener('change',centerCrop); $('vcrop').addEventListener('input',render);
 /** Bitrate de salida: al menos el del video original (reescalado a la nueva resolución), para no perder calidad
     al volver a codificarlo. Un celular graba 1080p a 15-25 Mbps; el ajuste "alto" por defecto de Mediabunny da ~6 Mbps. */
 async function targetBitrate(M,input,W,H){
@@ -1481,12 +1502,14 @@ async function exportVideo(){
     const c=mk(W,H), g=c.getContext('2d');
     const input=new M.Input({source:new M.BlobSource(V.file),formats:M.ALL_FORMATS});
     const output=new M.Output({format:new M.Mp4OutputFormat({fastStart:'in-memory'}),target:new M.BufferTarget()});
-    const codec=await M.getFirstEncodableVideoCodec(['avc','hevc','vp9','av1'],{width:W,height:H});
+    // formato vertical / cuadrado: se compone el fotograma completo y se entrega solo el recorte
+    const CR2=cropRect(W,H), crop=CR2.w!==W||CR2.h!==H, oc=crop?mk(CR2.w,CR2.h):null, og=crop?oc.getContext('2d'):null;
+    const codec=await M.getFirstEncodableVideoCodec(['avc','hevc','vp9','av1'],{width:CR2.w,height:CR2.h});
     if(!codec) throw new Error('noenc');
-    const bitrate=await targetBitrate(M,input,W,H);
+    const bitrate=await targetBitrate(M,input,CR2.w,CR2.h);
     conv=await M.Conversion.init({input,output,video:{
       width:W,height:H,fit:'fill',codec,bitrate,forceTranscode:true,allowTransformationMetadata:false,
-      processedWidth:W,processedHeight:H,
+      processedWidth:CR2.w,processedHeight:CR2.h,
       process:async sample=>{
         g.globalCompositeOperation='source-over'; g.globalAlpha=1;
         sample.draw(g,0,0,W,H);
@@ -1495,6 +1518,7 @@ async function exportVideo(){
         if(a>0&&(tracked||lit||vid)){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=paint(px(q),lit?lightGain(sample.timestamp):null); else a=0; }
         if(a>0&&occ){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=occlude(L,personMask(c,W,H,px(q),W,H,EMASK),W,H,ETMP); }
         if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(L,0,0); }
+        if(crop){ og.drawImage(c,CR2.x,CR2.y,CR2.w,CR2.h,0,0,CR2.w,CR2.h); return oc; }
         return c;
       }}});
     if(!conv.isValid){
