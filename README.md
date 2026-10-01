@@ -15,6 +15,8 @@ Nació para poner el título de mis covers de piano sobre el atril en los videos
 - **Editor de video**: reproduces el video con el letrero encima, marcas en una línea de tiempo con miniaturas cuándo aparece y desaparece (con transición suave) y descargas el MP4 con el audio original.
 - **Cámara en movimiento**: marcas las esquinas en un momento del video y Oblicua sigue la superficie en cada fotograma, aunque salga del encuadre y vuelva a entrar. Si en algún momento se desvía, corriges ahí los puntos y se reparte la corrección por el resto del video.
 - Exporta la foto completa o solo el contenido en **PNG transparente**, listo para un editor de video.
+- **Manos por delante**: el letrero queda detrás de las personas (manos, brazos, cuerpo) que pasan frente a él, con el segmentador de personas de MediaPipe.
+- **Pantallas apagadas y vidrios**: una opción para seguir superficies lisas o que reflejan, siguiendo su marco en vez de sus reflejos.
 - **Grabar desde la página** en 1080p o 4K con bitrate alto y el micrófono sin filtros de voz (para que la música suene bien). La cámara que ofrece el selector de archivos del celular graba en baja calidad.
 - Lupa de precisión para mover las esquinas, arrastrar y soltar, y pegar desde el portapapeles.
 - Todo corre en el navegador: las fotos y videos nunca salen del dispositivo.
@@ -27,7 +29,9 @@ Nació para poner el título de mis covers de piano sobre el atril en los videos
 - **Video con WebCodecs**: el contenido deformado se calcula una sola vez como capa transparente y se compone sobre cada fotograma en canvas; [Mediabunny](https://mediabunny.dev) se encarga de leer el archivo, decodificar, codificar a MP4 (H.264 cuando el navegador lo permite) y copiar el audio sin recomprimirlo. El video se exporta en su resolución original y con al menos el bitrate del archivo de entrada, para que volver a codificarlo no le baje la calidad. Respeta la rotación de los videos grabados en vertical.
 - **Seguimiento de superficies** (`tracker.js`, sin dependencias): el video se analiza a 640 px, hacia adelante y hacia atrás. Lucas-Kanade piramidal sigue puntos de la superficie de un fotograma al siguiente, RANSAC estima la homografía descartando lo que no está en el plano (gente, muebles), y cada fotograma se ajusta contra la imagen de referencia para que no se acumule error. Cuando la superficie sale del encuadre, descriptores binarios estilo ORB la vuelven a encontrar al entrar. Las dos pasadas se combinan y se suavizan con Savitzky-Golay.
 - Con seguimiento, la deformación cambia en cada fotograma, así que se hace en la GPU con WebGL (con la versión en JavaScript como respaldo).
-- Sin build: un `index.html` con HTML, CSS y JavaScript, más `tracker.js` y Mediabunny en `vendor/`, que solo se descargan al usarlos.
+- **Superficies que reflejan**: se ignora el interior y se siguen los 4 bordes del marco (búsqueda de lo grueso a lo fino y Gauss-Newton sobre la distancia de cada borde a su lado), verificando contra la franja que rodea la superficie en la referencia.
+- **Personas por delante**: [MediaPipe](https://ai.google.dev/edge/mediapipe/solutions/vision/image_segmenter) (`vendor/mediapipe`, Apache 2.0) estima en cada fotograma dónde hay una persona alrededor del letrero, y esa parte se recorta de la capa antes de fusionarla. Se elige solo entre GPU y CPU según cuál sea más rápido en el dispositivo.
+- Sin build: un `index.html` con HTML, CSS y JavaScript, más `tracker.js`, Mediabunny y MediaPipe en `vendor/`, que solo se descargan al usarlos.
 
 ## Uso local
 

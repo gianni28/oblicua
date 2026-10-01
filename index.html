@@ -259,6 +259,10 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
           <label class="check"><input type="checkbox" id="outline" checked> Ver contorno</label>
           <button class="btn sm" type="button" id="resetq">Reiniciar puntos</button>
         </div>
+        <div class="trackbox">
+          <label class="check"><input type="checkbox" id="occ"> Las manos o personas pasan por delante</label>
+          <p class="note" id="occNote">El letrero queda detrás de las personas, como si estuviera de verdad en la superficie. Ideal si tus manos pasan sobre el atril.</p>
+        </div>
         <div class="trackbox" id="trackSec" hidden>
         <span class="l">¿La cámara se mueve?</span>
         <p class="note" id="tnote"></p>
@@ -383,7 +387,8 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
 
   <section class="tips" aria-label="Consejos">
     <div class="tip"><h3>Para videos</h3><p>Sube el video, elige un fotograma donde se vea bien la superficie y ajusta los puntos. Si la cámara se mueve, pulsa "Seguir la superficie": Oblicua la busca en cada fotograma, aunque salga del encuadre y vuelva a entrar. "Descargar video" lo devuelve con el letrero puesto y su audio.</p></div>
-    <div class="tip"><h3>Seguir una superficie</h3><p>Funciona mejor con superficies que tienen dibujo o textura (un cuadro, un póster, una portada) que con una pared lisa. Si en algún momento el letrero se desvía, pausa ahí, arrastra los puntos a su sitio y pulsa "Actualizar seguimiento".</p></div>
+    <div class="tip"><h3>Seguir una superficie</h3><p>Funciona mejor con superficies que tienen dibujo o textura (un cuadro, un póster, una portada). Para una pantalla apagada, un vidrio o un espejo marca "Es lisa o refleja": así sigue el marco y no los reflejos. Si en algún momento el letrero se desvía, pausa ahí, arrastra los puntos a su sitio y pulsa "Actualizar seguimiento".</p></div>
+    <div class="tip"><h3>Manos por delante</h3><p>Con "Las manos o personas pasan por delante", el letrero queda detrás de tus manos, brazos o cuerpo, como si estuviera impreso en la superficie. La primera vez descarga un detector de personas de 16 MB que corre en tu dispositivo.</p></div>
     <div class="tip"><h3>Que se vea real</h3><p>Con colores oscuros, la fusión automática usa "Impreso": el texto toma la textura y la luz de la superficie. Con colores claros (como blanco sobre un fondo negro) cambia sola a "Normal", porque "Impreso" solo puede oscurecer.</p></div>
     <div class="tip"><h3>Precisión</h3><p>Al arrastrar un punto aparece una lupa. En computador puedes seleccionar un punto y moverlo con las flechas del teclado (Shift para pasos grandes).</p></div>
     <div class="tip"><h3>Privado</h3><p>Todo se procesa en tu navegador. Tus fotos y videos no se suben a ningún servidor.</p></div>
@@ -420,6 +425,7 @@ const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;r
 const free=c=>{ if(c){ c.width=0; c.height=0; } };
 const SCR=mk(1,1), SCRX=SCR.getContext('2d',{willReadFrequently:true});
 
+let bgVer=0; // cambia cada vez que cambia la foto o el video
 const S={video:null,bg:null,bgW:1600,bgH:1000,isSample:true,q:null,mode:'text',color:'#16181d',align:'center',img:null,imgSrc:null,sampleQ:null,
   prog:{moved:false,content:false,saved:false}}; // lo que ya hizo la persona, para guiarla al siguiente paso
 
@@ -629,6 +635,72 @@ function blendMode(){
   return S.mode==='text'&&!light?'multiply':'over';
 }
 
+/* ---------- personas por delante del letrero ----------
+   MediaPipe (vendor/mediapipe, solo se descarga al activar la opción) estima en cada fotograma dónde hay una
+   persona (cuerpo, brazos, manos, pelo, ropa) y esa parte se recorta del letrero, que así queda detrás. */
+let SEG=null,segP=null,segKey='',segM=null,segT=0;
+const SEGC=mk(1,1),SEGX=SEGC.getContext('2d',{willReadFrequently:true}),PMASK=mk(1,1),OCCV=mk(1,1);
+function loadSeg(){
+  return segP||(segP=(async()=>{
+    const {FilesetResolver,ImageSegmenter}=await import('./vendor/mediapipe/vision_bundle.mjs');
+    const fs=await FilesetResolver.forVisionTasks(new URL('vendor/mediapipe/wasm',location.href).href);
+    // Se prueban GPU y CPU con una imagen de prueba y se queda el más rápido: sin una GPU real (WebGL por software)
+    // leer la máscara desde la GPU es muy lento.
+    const model=new URL('vendor/mediapipe/selfie_multiclass_256x256.tflite',location.href).href, test=mk(320,320);
+    test.getContext('2d').fillRect(100,60,120,200);
+    let best=null,bestT=Infinity,err=null;
+    for(const delegate of ['GPU','CPU']){
+      try{
+        const s=await ImageSegmenter.createFromOptions(fs,{baseOptions:{modelAssetPath:model,delegate},runningMode:'IMAGE',outputConfidenceMasks:true,outputCategoryMask:false});
+        const run=()=>{ const r=s.segment(test); r.confidenceMasks[0].getAsFloat32Array(); r.close(); };
+        run(); const t0=performance.now(); run(); const t=performance.now()-t0;
+        if(t<bestT){ if(best) best.close(); best=s; bestT=t; } else s.close();
+        if(delegate==='GPU'&&t<40) break; // con una GPU de verdad no hace falta probar la CPU
+      }catch(e){ err=e; }
+    }
+    free(test);
+    if(!best) throw err||new Error('seg');
+    return SEG=best;
+  })().catch(e=>{ segP=null; throw e; }));
+}
+/** Máscara con alfa = 1 donde hay una persona, solo alrededor del letrero (P, en píxeles de un fotograma W×H):
+    así la máscara tiene más detalle donde importa (los dedos sobre el atril). src: el fotograma sin letrero,
+    de tamaño natural sW×sH. Devuelve {c,x,y,w,h}: el canvas y dónde va en el fotograma W×H. */
+function personMask(src,sW,sH,P,W,H,out){
+  const xs=P.map(p=>p.x),ys=P.map(p=>p.y),mx=(Math.max(...xs)-Math.min(...xs))*.25,my=(Math.max(...ys)-Math.min(...ys))*.25;
+  const x0=Math.max(0,Math.min(...xs)-mx),y0=Math.max(0,Math.min(...ys)-my),x1=Math.min(W,Math.max(...xs)+mx),y1=Math.min(H,Math.max(...ys)+my);
+  const bw=Math.max(2,x1-x0),bh=Math.max(2,y1-y0),s=Math.min(512/Math.max(bw,bh),Math.max(sW/W,sH/H)*1);
+  const w=Math.max(2,Math.round(bw*s)),h=Math.max(2,Math.round(bh*s));
+  if(SEGC.width!==w||SEGC.height!==h){ SEGC.width=w; SEGC.height=h; }
+  SEGX.drawImage(src,x0*sW/W,y0*sH/H,bw*sW/W,bh*sH/H,0,0,w,h);
+  const r=SEG.segment(SEGC);
+  try{
+    const m=r.confidenceMasks[0], a=m.getAsFloat32Array(), mw=m.width, mh=m.height; // máscara 0 = fondo
+    if(out.width!==mw||out.height!==mh){ out.width=mw; out.height=mh; }
+    const g=out.getContext('2d'), id=g.createImageData(mw,mh), d=id.data;
+    for(let i=0;i<a.length;i++){ let t=(1-a[i]-.3)/.4; t=t<0?0:t>1?1:t; d[4*i+3]=t*t*(3-2*t)*255; }
+    g.putImageData(id,0,0);
+  }finally{ r.close(); }
+  return {c:out,x:x0,y:y0,w:bw,h:bh};
+}
+/** El letrero L sin la parte tapada por personas (en tmp). */
+function occlude(L,mask,W,H,tmp){
+  if(tmp.width!==W||tmp.height!==H){ tmp.width=W; tmp.height=H; }
+  const g=tmp.getContext('2d');
+  g.globalCompositeOperation='copy'; g.drawImage(L,0,0);
+  g.globalCompositeOperation='destination-out'; g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(mask.c,mask.x,mask.y,mask.w,mask.h);
+  g.globalCompositeOperation='source-over';
+  return tmp;
+}
+$('occ').addEventListener('change',async e=>{
+  const n=$('occNote'), base='El letrero queda detrás de las personas, como si estuviera de verdad en la superficie. Ideal si tus manos pasan sobre el atril.';
+  segKey='';
+  if(!e.target.checked){ n.textContent=base; n.style.color=''; render(); return; }
+  n.textContent='Cargando el detector de personas (16 MB, solo la primera vez)…'; n.style.color='';
+  try{ await loadSeg(); n.textContent=base; render(); }
+  catch(err){ e.target.checked=false; n.textContent='Este navegador no pudo cargar el detector de personas.'; n.style.color='var(--bad)'; }
+});
+
 /* ---------- view ---------- */
 let cssW=0,cssH=0,raf=0,pvKey='',pvSrc=null,layerKey='',layerCv=null;
 const LAYER=mk(1,1), LCTX=LAYER.getContext('2d',{willReadFrequently:true});
@@ -689,7 +761,14 @@ function draw(){
     let a=1;
     if(V){ a=timeAlpha(V.el.currentTime); if(!playing&&a<.3) a=.3; }
     if(lost) a=0;
-    if(a>0){ const L=updateLayer(P,W,H,SP); vctx.globalAlpha=a; vctx.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; vctx.drawImage(L,0,0); }
+    if(a>0){ let L=updateLayer(P,W,H,SP);
+      if($('occ').checked&&SEG){
+        // al reproducir, como mucho ~15 veces por segundo para no trabar la reproducción en celulares lentos
+        const k=bgVer+'|'+(V?curT():0)+'|'+W+'x'+H+'|'+P.map(p=>p.x.toFixed(0)+','+p.y.toFixed(0)).join(';'), now=performance.now();
+        if(k!==segKey&&!drag&&(!playing||now-segT>66||!segM)){ segM=personMask(S.bg,S.bgW,S.bgH,P,W,H,PMASK); segKey=k; segT=now; }
+        if(segM) L=occlude(L,segM,W,H,OCCV);
+      }
+      vctx.globalAlpha=a; vctx.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; vctx.drawImage(L,0,0); }
     vctx.globalCompositeOperation='source-over'; vctx.globalAlpha=1;
     if(drawErr){ drawErr=false; setMsg(''); }
   }catch(e){
@@ -749,7 +828,7 @@ handles.forEach(h=>{
     else{ const s=drag.start[+drag.i]; S.q[+drag.i]={x:cl(s.x+dx),y:cl(s.y+dy)}; }
     render();
   });
-  const end=()=>{ if(drag) setKey(); drag=null; loupe.hidden=true; };
+  const end=()=>{ if(drag) setKey(); drag=null; loupe.hidden=true; render(); };
   h.addEventListener('pointerup',end); h.addEventListener('pointercancel',end);
   h.addEventListener('keydown',e=>{
     const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key]; if(!k)return;
@@ -771,14 +850,14 @@ function drawLoupe(){
 function defaultQ(){return [{x:.3,y:.3},{x:.7,y:.3},{x:.7,y:.62},{x:.3,y:.62}];}
 function useSample(){
   dropVideo();
-  S.bg=makeSample(); S.bgW=1600; S.bgH=1000; S.isSample=true; S.q=S.sampleQ.map(p=>({...p}));
+  S.bg=makeSample(); S.bgW=1600; bgVer++; S.bgH=1000; S.isSample=true; S.q=S.sampleQ.map(p=>({...p}));
   $('tag').hidden=false; $('result').hidden=true; layout();
 }
 function loadBgFile(f){
   if(f&&(/^video\//.test(f.type)||/\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name||'')))return loadVideo(f);
   if(!f||!/^image\//.test(f.type)){ setMsg('Ese archivo no es una foto ni un video. Prueba con JPG, PNG o MP4.','bad'); return; }
   const url=URL.createObjectURL(f), im=new Image();
-  im.onload=()=>{ dropVideo(); S.prog.moved=S.prog.saved=false; S.bg=im; S.bgW=im.naturalWidth; S.bgH=im.naturalHeight; S.isSample=false; S.q=defaultQ();
+  im.onload=()=>{ dropVideo(); S.prog.moved=S.prog.saved=false; S.bg=im; bgVer++; S.bgW=im.naturalWidth; S.bgH=im.naturalHeight; S.isSample=false; S.q=defaultQ();
     $('tag').hidden=true; $('result').hidden=true; setMsg(''); layout(); };
   im.onerror=()=>setMsg('No pude abrir esa imagen. Prueba con JPG o PNG.','bad');
   im.src=url;
@@ -938,7 +1017,7 @@ async function loadVideo(f){
     S.video=V;
     // Momento exacto del fotograma en pantalla mientras se reproduce, para que el letrero no vaya un fotograma tarde.
     if(el.requestVideoFrameCallback){ const vf=(now,m)=>{ if(S.video!==V) return; V.mt=m.mediaTime; if(V.track) render(); el.requestVideoFrameCallback(vf); }; el.requestVideoFrameCallback(vf); }
-    S.bgW=el.videoWidth; S.bgH=el.videoHeight; S.isSample=false; S.q=defaultQ(); S.bg=el;
+    S.bgW=el.videoWidth; S.bgH=el.videoHeight; S.isSample=false; S.q=defaultQ(); S.bg=el; bgVer++;
     iosHint(Math.min(S.bgW,S.bgH));
     el.addEventListener('play',()=>{ stage.classList.add('playing'); setPlayIcon(true); render(); });
     el.addEventListener('pause',()=>{ stage.classList.remove('playing'); setPlayIcon(false); render(); });
@@ -1169,7 +1248,7 @@ async function exportVideo(){
       return layer; };
     const paint=P=>GPU.draw(P,W,H,src,op)||cpu(P);
     const still=tracked?null:cpu(px(S.q));
-    const mult=blendMode()==='multiply';
+    const mult=blendMode()==='multiply', occ=$('occ').checked&&!!(await loadSeg().catch(()=>null)), EMASK=mk(1,1), ETMP=mk(1,1);
     const alphaAt=timeAlpha;
     const c=mk(W,H), g=c.getContext('2d');
     const input=new M.Input({source:new M.BlobSource(V.file),formats:M.ALL_FORMATS});
@@ -1185,6 +1264,7 @@ async function exportVideo(){
         sample.draw(g,0,0,W,H);
         let a=alphaAt(sample.timestamp), L=still;
         if(a>0&&tracked){ const q=quadAt(sample.timestamp); if(q) L=paint(px(q)); else a=0; }
+        if(a>0&&occ){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=occlude(L,personMask(c,W,H,px(q),W,H,EMASK),W,H,ETMP); }
         if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(L,0,0); }
         return c;
       }}});
@@ -1273,7 +1353,15 @@ async function exportIt(full){
     const c=mk(W,H), g=c.getContext('2d',{willReadFrequently:true});
     const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(shapeQ().map(p=>({x:p.x*W,y:p.y*H})),4096);
     const B=S.video&&S.video.track&&!quadAt(curT())?{w:0,h:0}:bbox(P,W,H); // sin la superficie en este fotograma, sin letrero
-    if(full){
+    const occ=$('occ').checked&&SEG&&B.w>0&&B.h>0;
+    if(occ){ // el contenido va en una capa aparte para recortar a las personas antes de fusionarlo
+      const lay=mk(W,H), lg=lay.getContext('2d',{willReadFrequently:true}), img=lg.createImageData(B.w,B.h);
+      warp(img,B,P,src,'write',$('op').value/100); lg.putImageData(img,B.x0,B.y0);
+      const O=occlude(lay,personMask(S.bg,S.bgW,S.bgH,P,W,H,mk(1,1)),W,H,mk(1,1)); free(lay);
+      if(full){ g.drawImage(S.bg,0,0,W,H); g.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; }
+      g.drawImage(O,0,0); g.globalCompositeOperation='source-over'; free(O);
+      const blob=await new Promise(r=>c.toBlob(r,full?'image/jpeg':'image/png',.93)); free(c); await save(blob,full?'oblicua.jpg':'oblicua-contenido.png');
+    } else if(full){
       g.drawImage(S.bg,0,0,W,H);
       if(B.w>0&&B.h>0){ const img=g.getImageData(B.x0,B.y0,B.w,B.h); warp(img,B,P,src,blendMode(),$('op').value/100); g.putImageData(img,B.x0,B.y0); }
       const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.93)); free(c); await save(blob,'oblicua.jpg');
