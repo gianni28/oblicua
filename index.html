@@ -80,6 +80,7 @@ details.flat>summary{display:none}
 .trackbox .l{color:var(--ink);font-weight:700}
 .tlhint{margin:0;font-size:12px;color:var(--muted)}
 .trackbox .msg:empty{display:none}
+.linkbtn{font:inherit;font-size:inherit;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
 .stage.picking{cursor:crosshair}
 #detect[aria-pressed=true]{background:var(--accent);color:#1b1d22;border-color:transparent}
 .rec{position:fixed;inset:0;z-index:50;background:#000;color:#fff;display:flex;flex-direction:column}
@@ -325,6 +326,7 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
             </div>
             <div class="mini"><label for="vpos">Altura</label><input type="range" id="vpos" min="5" max="95" value="50"><output id="vpos_o">50%</output></div>
             <label class="check"><input type="checkbox" id="shadow"> Sombra suave</label>
+            <p class="note" id="styleNote">Oblicua recuerda tu estilo (fuentes, color, tamaños) para la próxima vez. <button class="linkbtn" type="button" id="styleReset">Volver al estilo original</button></p>
           </div>
         </div>
 
@@ -1551,6 +1553,24 @@ $('cpick').addEventListener('input',e=>{S.color=e.target.value;[...$('sw').query
 $('blend').addEventListener('input',updLightUI);
 ['txt','sub'].forEach(id=>$(id).addEventListener('input',()=>{S.prog.content=true;}));
 ['font','subfont'].forEach(id=>$(id).addEventListener('change',async()=>{styleSel($('font'));styleSel($('subfont'));await loadFont();pvKey='';render();}));
+/* estilo recordado: fuentes, color, alineación, tamaños y fusión (no el texto), solo en este navegador */
+const STYLE_IDS=['font','subfont','size','subsize','subcaps','vpos','shadow','op','blend'], STYLE_KEY='oblicua-estilo';
+const STYLE_DEF=Object.fromEntries(STYLE_IDS.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value]));
+function saveStyle(){
+  const o=Object.fromEntries(STYLE_IDS.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])); o.color=S.color; o.align=S.align;
+  try{ localStorage.setItem(STYLE_KEY,JSON.stringify(o)); }catch(e){}
+}
+function applyStyle(o){
+  STYLE_IDS.forEach(id=>{ if(o[id]===undefined) return; if($(id).type==='checkbox') $(id).checked=!!o[id]; else $(id).value=o[id]; });
+  if(o.color){ S.color=o.color; [...$('sw').querySelectorAll('.sw')].forEach(x=>x.setAttribute('aria-pressed',x.dataset.c===o.color)); }
+  if(o.align){ S.align=o.align; [...$('align').children].forEach(x=>x.setAttribute('aria-pressed',x.dataset.a===o.align)); }
+  ['size','subsize','vpos'].forEach(id=>{ const out=$(id+'_o'); if(out) out.textContent=$(id).value+'%'; });
+}
+try{ const o=JSON.parse(localStorage.getItem(STYLE_KEY)||'null'); if(o) applyStyle(o); }catch(e){}
+STYLE_IDS.forEach(id=>$(id).addEventListener(id==='font'||id==='subfont'?'change':'input',saveStyle));
+$('sw').addEventListener('click',saveStyle); $('cpick').addEventListener('input',saveStyle); $('align').addEventListener('click',saveStyle);
+$('styleReset').onclick=async()=>{ applyStyle({...STYLE_DEF,color:'#16181d',align:'center'}); try{ localStorage.removeItem(STYLE_KEY); }catch(e){}
+  styleSel($('font')); styleSel($('subfont')); await loadFont(); pvKey=''; render(); };
 styleSel($('font')); styleSel($('subfont'));
 ['size','subsize','vpos'].forEach(id=>{const upd=()=>$(id+'_o').textContent=$(id).value+'%';$(id).addEventListener('input',upd);upd();});
 const ta=$('txt'); const grow=()=>{ta.style.height='auto';ta.style.height=Math.max(46,ta.scrollHeight)+'px';}; ta.addEventListener('input',grow); requestAnimationFrame(grow);
