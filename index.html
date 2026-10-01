@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Oblicua: pon texto o una imagen sobre cualquier superficie de una foto, con su mismo ángulo. Gratis y en tu navegador.">
+<meta name="description" content="Oblicua: pon texto o una imagen sobre cualquier superficie de una foto o un video, con su mismo ángulo. Gratis y en tu navegador.">
 <style>[hidden]{display:none!important}img{max-width:100%}body{margin:0}</style>
 <title>Oblicua</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -112,6 +112,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tip h3{margin:0 0 4px;font-size:15px}
 .tip p{margin:0;color:var(--muted);font-size:14px}
 footer{color:var(--muted);font-size:13px;text-align:center}
+.scrub{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--muted)}
+.scrub output{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:500}
+.vbox{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.times{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input[type=number]{width:100%;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.prog{height:8px;border-radius:99px;background:var(--field);border:1px solid var(--line);overflow:hidden}
+.prog span{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.result video{max-width:100%;max-height:420px;border-radius:10px;border:1px solid var(--line);background:#000}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -123,9 +132,9 @@ footer{color:var(--muted);font-size:13px;text-align:center}
       <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 8 L28 5 L28 29 L6 26 Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><g fill="#f08c00"><circle cx="6" cy="8" r="3.2"/><circle cx="28" cy="5" r="3.2"/><circle cx="28" cy="29" r="3.2"/><circle cx="6" cy="26" r="3.2"/></g></svg>
       <h1>Oblicua</h1>
     </div>
-    <p class="lede">Pon texto o una imagen sobre cualquier superficie de una foto, con su mismo ángulo: un letrero, una pared, una pantalla, un cuadro o el atril de un piano.</p>
+    <p class="lede">Pon texto o una imagen sobre cualquier superficie de una foto o un video, con su mismo ángulo: un letrero, una pared, una pantalla, un cuadro o el atril de un piano.</p>
     <ol class="steps">
-      <li><b>1</b>Sube tu foto</li>
+      <li><b>1</b>Sube tu foto o video</li>
       <li><b>2</b>Lleva los 4 puntos a las esquinas</li>
       <li><b>3</b>Escribe o sube tu imagen</li>
       <li><b>4</b>Descarga</li>
@@ -145,16 +154,21 @@ footer{color:var(--muted);font-size:13px;text-align:center}
           <div class="h move" data-i="m" tabindex="0" role="slider" aria-label="Mover todo"></div>
           <canvas class="loupe" id="loupe" width="240" height="240" hidden></canvas>
         </div>
-        <div class="drop" id="drop" hidden>Suelta la foto aquí</div>
+        <div class="drop" id="drop" hidden>Suelta la foto o el video aquí</div>
       </div>
-      <p class="stagehint">Arrastra los puntos naranjas a las esquinas de la superficie. El cuadrado del centro mueve todo. En computador también puedes arrastrar o pegar (Ctrl+V) una foto.</p>
+      <div class="scrub" id="scrub" hidden>
+        <label for="vt">Fotograma</label>
+        <input type="range" id="vt" min="0" max="1" step="0.01" value="0">
+        <output id="vt_o">0:00</output>
+      </div>
+      <p class="stagehint">Arrastra los puntos naranjas a las esquinas de la superficie. El cuadrado del centro mueve todo. En computador también puedes arrastrar o pegar (Ctrl+V) una foto. Con un video, elige un fotograma donde se vea bien la superficie.</p>
     </div>
 
     <div class="panel">
       <section class="group">
-        <h2 class="gtitle">Foto</h2>
+        <h2 class="gtitle">Foto o video</h2>
         <div class="row">
-          <span class="btn primary grow">Subir foto<input type="file" id="bgfile" accept="image/*" aria-label="Subir foto de fondo"></span>
+          <span class="btn primary grow">Subir foto o video<input type="file" id="bgfile" accept="image/*,video/*" aria-label="Subir foto o video de fondo"></span>
           <button class="btn" type="button" id="sample">Ver ejemplo</button>
         </div>
       </section>
@@ -227,6 +241,23 @@ footer{color:var(--muted);font-size:13px;text-align:center}
 
       <section class="group">
         <h2 class="gtitle">Descargar</h2>
+        <div class="vbox" id="vidExp" hidden>
+          <span class="l" style="color:var(--ink);font-weight:700">Video con el letrero</span>
+          <div class="times">
+            <div class="field"><label class="l" for="tFrom">Aparece en (s)</label><input type="number" id="tFrom" min="0" step="0.1" value="0" inputmode="decimal"></div>
+            <div class="field"><label class="l" for="tTo">Desaparece en (s)</label><input type="number" id="tTo" min="0" step="0.1" value="0" inputmode="decimal"></div>
+          </div>
+          <div class="two">
+            <label class="check"><input type="checkbox" id="fade" checked> Aparecer suave</label>
+            <select id="vq" aria-label="Resolución del video"><option value="1080">1080p (recomendado)</option><option value="720">720p (más rápido)</option><option value="0">Original</option></select>
+          </div>
+          <div class="row">
+            <button class="btn primary grow" type="button" id="expVid">Descargar video (MP4)</button>
+            <button class="btn" type="button" id="cancelVid" hidden>Cancelar</button>
+          </div>
+          <div class="prog" id="prog" hidden><span id="progBar"></span></div>
+          <p class="note">Mantiene el audio original. El letrero queda fijo, así que la cámara debe estar quieta.</p>
+        </div>
         <div class="row">
           <button class="btn primary grow" type="button" id="expFull">Foto completa (JPG)</button>
           <button class="btn grow" type="button" id="expOnly">Solo el contenido (PNG transparente)</button>
@@ -234,18 +265,20 @@ footer{color:var(--muted);font-size:13px;text-align:center}
         <p class="note">"Solo el contenido" tiene el mismo tamaño que tu foto, así que en un editor de video lo pones encima, lo estiras a pantalla completa y cae en su sitio.</p>
         <p class="msg" id="msg" role="status"></p>
         <div class="result" id="result" hidden>
-          <span class="note">Si no se descargó solo: mantén presionada la imagen y elige Guardar.</span>
+          <span class="note" id="resnote">Si no se descargó solo: mantén presionada la imagen y elige Guardar.</span>
           <img id="resimg" alt="Resultado exportado">
+          <video id="resvid" controls playsinline hidden></video>
+          <button class="btn" type="button" id="shareVid" hidden>Guardar en Fotos / Compartir</button>
         </div>
       </section>
     </div>
   </div>
 
   <section class="tips" aria-label="Consejos">
-    <div class="tip"><h3>Para videos</h3><p>Pausa el video, toma una captura y recórtala para que no tenga bordes. Súbela aquí, descarga "Solo el contenido" y ponla como superposición en CapCut o InShot. Funciona si la cámara no se mueve.</p></div>
+    <div class="tip"><h3>Para videos</h3><p>Sube el video, elige un fotograma donde se vea bien la superficie y ajusta los puntos. "Descargar video" lo devuelve con el letrero puesto y su audio. Funciona si la cámara no se mueve.</p></div>
     <div class="tip"><h3>Que se vea real</h3><p>"Impreso" hace que el texto tome la textura y la luz de la superficie. Funciona mejor con colores oscuros sobre fondos claros. Sobre fondos oscuros usa "Normal" con texto claro.</p></div>
     <div class="tip"><h3>Precisión</h3><p>Al arrastrar un punto aparece una lupa. En computador puedes seleccionar un punto y moverlo con las flechas del teclado (Shift para pasos grandes).</p></div>
-    <div class="tip"><h3>Privado</h3><p>Todo se procesa en tu navegador. Tus fotos no se suben a ningún servidor.</p></div>
+    <div class="tip"><h3>Privado</h3><p>Todo se procesa en tu navegador. Tus fotos y videos no se suben a ningún servidor.</p></div>
   </section>
 
   <footer>Hecho por Gianni</footer>
@@ -259,7 +292,7 @@ const stage=$('stage'), stagebox=$('stagebox'), loupe=$('loupe'), lctx=loupe.get
 const handles=[...document.querySelectorAll('.h')];
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
 
-const S={bg:null,bgW:1600,bgH:1000,isSample:true,q:null,mode:'text',color:'#16181d',align:'center',img:null,imgSrc:null,sampleQ:null};
+const S={video:null,bg:null,bgW:1600,bgH:1000,isSample:true,q:null,mode:'text',color:'#16181d',align:'center',img:null,imgSrc:null,sampleQ:null};
 
 /* ---------- geometry ---------- */
 function sq2q(p){
@@ -480,13 +513,15 @@ function drawLoupe(){
 /* ---------- background loading ---------- */
 function defaultQ(){return [{x:.3,y:.3},{x:.7,y:.3},{x:.7,y:.62},{x:.3,y:.62}];}
 function useSample(){
+  dropVideo();
   S.bg=makeSample(); S.bgW=1600; S.bgH=1000; S.isSample=true; S.q=S.sampleQ.map(p=>({...p}));
   $('tag').hidden=false; $('result').hidden=true; layout();
 }
 function loadBgFile(f){
-  if(!f||!/^image\//.test(f.type)){ setMsg('Ese archivo no es una imagen. Prueba con JPG o PNG.','bad'); return; }
+  if(f&&(/^video\//.test(f.type)||/\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name||''))){ loadVideo(f); return; }
+  if(!f||!/^image\//.test(f.type)){ setMsg('Ese archivo no es una foto ni un video. Prueba con JPG, PNG o MP4.','bad'); return; }
   const url=URL.createObjectURL(f), im=new Image();
-  im.onload=()=>{ S.bg=im; S.bgW=im.naturalWidth; S.bgH=im.naturalHeight; S.isSample=false; S.q=defaultQ();
+  im.onload=()=>{ dropVideo(); S.bg=im; S.bgW=im.naturalWidth; S.bgH=im.naturalHeight; S.isSample=false; S.q=defaultQ();
     $('tag').hidden=true; $('result').hidden=true; setMsg('Foto cargada. Lleva los 4 puntos a las esquinas de la superficie.','ok'); layout(); };
   im.onerror=()=>setMsg('No pude abrir esa imagen. Prueba con JPG o PNG.','bad');
   im.src=url;
@@ -503,6 +538,124 @@ document.addEventListener('paste',e=>{
   if(e.target&&(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'))return;
   const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/')); if(it) loadBgFile(it.getAsFile());
 });
+
+
+/* ---------- video ---------- */
+const fmtT=t=>{t=Math.max(0,t||0);const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(t<60&&t%1?1:0).replace(/\.0$/,'');};
+let MB=null;
+const loadMB=async()=>MB||(MB=await import('./vendor/mediabunny.min.js'));
+function dropVideo(){
+  if(S.video){ try{S.video.el.removeAttribute('src');S.video.el.load();URL.revokeObjectURL(S.video.url);}catch(e){} }
+  S.video=null; $('scrub').hidden=true; $('vidExp').hidden=true; $('expFull').textContent='Foto completa (JPG)'; $('expFull').classList.add('primary');
+}
+function once(el,ok,bad){return new Promise((res,rej)=>{const a=()=>{c();res();},b=()=>{c();rej(new Error(bad));},c=()=>{el.removeEventListener(ok,a);el.removeEventListener('error',b);};el.addEventListener(ok,a);el.addEventListener('error',b);});}
+async function loadVideo(f){
+  setMsg('Abriendo el video…');
+  const url=URL.createObjectURL(f), el=document.createElement('video');
+  el.muted=true; el.playsInline=true; el.setAttribute('playsinline',''); el.preload='auto'; el.src=url;
+  try{
+    await once(el,'loadeddata','load');
+    let dur=el.duration;
+    if(!isFinite(dur)){ try{ const M=await loadMB(); const inp=new M.Input({source:new M.BlobSource(f),formats:M.ALL_FORMATS}); dur=await inp.computeDuration(); }catch(e){ dur=0; } }
+    if(!el.videoWidth||!el.videoHeight) throw new Error('size');
+    dropVideo();
+    const frame=mk(el.videoWidth,el.videoHeight);
+    S.video={file:f,url,el,dur:dur||0,frame,fctx:frame.getContext('2d'),t:0};
+    try{ await el.play(); el.pause(); }catch(e){}
+    S.bgW=el.videoWidth; S.bgH=el.videoHeight; S.isSample=false; S.q=defaultQ(); S.bg=frame;
+    const vt=$('vt'); vt.max=String(Math.max(.01,S.video.dur)); vt.value='0'; $('vt_o').textContent=fmtT(0);
+    $('tFrom').value='0'; $('tTo').value=(S.video.dur||0).toFixed(1); $('tFrom').max=$('tTo').max=String(S.video.dur||0);
+    $('vq').value=Math.min(S.bgW,S.bgH)>1080?'1080':'0';
+    $('scrub').hidden=false; $('vidExp').hidden=false; $('expFull').textContent='Este fotograma (JPG)'; $('expFull').classList.remove('primary');
+    $('tag').hidden=true; $('result').hidden=true;
+    await seekTo(Math.min(.05,S.video.dur/2));
+    layout();
+    setMsg('Video cargado. Elige un fotograma y lleva los 4 puntos a las esquinas.','ok');
+  }catch(e){
+    URL.revokeObjectURL(url);
+    setMsg('Tu navegador no pudo abrir ese video. Prueba con un MP4 o un video grabado con el celular.','bad');
+  }
+}
+let seeking=false,wantT=null;
+async function seekTo(t){
+  const V=S.video; if(!V) return;
+  wantT=t; if(seeking) return; seeking=true;
+  try{
+    while(wantT!==null&&S.video===V){
+      const tt=wantT; wantT=null;
+      if(Math.abs(V.el.currentTime-tt)>.001){ V.el.currentTime=tt; await Promise.race([once(V.el,'seeked','seek'),new Promise(r=>setTimeout(r,1500))]); }
+      V.fctx.drawImage(V.el,0,0,V.frame.width,V.frame.height); V.t=tt; render();
+    }
+  }catch(e){} finally{ seeking=false; }
+}
+$('vt').addEventListener('input',e=>{const t=+e.target.value;$('vt_o').textContent=fmtT(t);seekTo(t);});
+
+let conv=null;
+function evenDims(W,H,cap){const s=cap?Math.min(1,cap/Math.min(W,H)):1;const ev=v=>Math.max(2,Math.round(v*s/2)*2);return [ev(W),ev(H)];}
+async function exportVideo(){
+  const V=S.video; if(!V) return;
+  if(!('VideoEncoder' in window)||!('VideoFrame' in window)){ setMsg('Este navegador no puede crear videos. Usa Chrome, Edge o Safari actualizados. Mientras, puedes descargar "Solo el contenido".','bad'); return; }
+  const btns=[$('expVid'),$('expFull'),$('expOnly')]; btns.forEach(b=>b.disabled=true);
+  $('cancelVid').hidden=false; $('prog').hidden=false; $('progBar').style.width='0%'; $('result').hidden=true;
+  setMsg('Preparando…');
+  try{
+    const M=await loadMB(); await loadFont();
+    const [W,H]=evenDims(S.bgW,S.bgH,+$('vq').value);
+    // Capa con el contenido ya deformado, calculada una sola vez.
+    const layer=mk(W,H), lg=layer.getContext('2d',{willReadFrequently:true});
+    const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(P,4096), B=bbox(P,W,H);
+    if(B.w>0&&B.h>0){ const img=lg.createImageData(B.w,B.h); warp(img,B,P,src,'write',$('op').value/100); lg.putImageData(img,B.x0,B.y0); }
+    const mult=$('blend').value==='multiply', fade=$('fade').checked?.4:0;
+    let t0=Math.max(0,+$('tFrom').value||0), t1=+$('tTo').value; if(!(t1>t0)) t1=Infinity;
+    const alphaAt=t=>{ if(t<t0||t>t1) return 0; if(!fade) return 1; return Math.min(1,(t-t0)/fade,t1===Infinity?1:(t1-t)/fade); };
+    const c=mk(W,H), g=c.getContext('2d');
+    const input=new M.Input({source:new M.BlobSource(V.file),formats:M.ALL_FORMATS});
+    const output=new M.Output({format:new M.Mp4OutputFormat({fastStart:'in-memory'}),target:new M.BufferTarget()});
+    const codec=await M.getFirstEncodableVideoCodec(['avc','hevc','vp9','av1'],{width:W,height:H});
+    if(!codec) throw new Error('noenc');
+    conv=await M.Conversion.init({input,output,video:{
+      width:W,height:H,fit:'fill',codec,quality:M.QUALITY_HIGH,forceTranscode:true,allowTransformationMetadata:false,
+      processedWidth:W,processedHeight:H,
+      process:sample=>{
+        g.globalCompositeOperation='source-over'; g.globalAlpha=1;
+        sample.draw(g,0,0,W,H);
+        const a=alphaAt(sample.timestamp);
+        if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(layer,0,0); }
+        return c;
+      }}});
+    if(!conv.isValid){
+      const v=conv.discardedTracks.find(d=>d.track.type==='video');
+      throw new Error(v&&/source_codec/.test(v.reason)?'nodec':'noenc');
+    }
+    const lostAudio=conv.discardedTracks.some(d=>d.track.type==='audio'&&d.reason!=='discarded_by_user');
+    conv.onProgress=p=>{ $('progBar').style.width=Math.round(p*100)+'%'; setMsg('Creando el video… '+Math.round(p*100)+' %'); };
+    setMsg('Creando el video… 0 %');
+    await conv.execute();
+    const blob=new Blob([output.target.buffer],{type:'video/mp4'});
+    await saveVideo(blob,'oblicua-video.mp4');
+    if(lostAudio) setMsg('Listo, pero tu navegador no pudo conservar el audio de este video.','bad');
+  }catch(e){
+    const name=e&&e.name||'';
+    if(/Cancel/i.test(name)||/cancel/i.test(e&&e.message||'')) setMsg('Cancelado.');
+    else if(e&&e.message==='nodec') setMsg('Tu navegador no puede leer el formato de este video. Prueba en Safari o Chrome, o convierte el video a MP4.','bad');
+    else if(e&&e.message==='noenc') setMsg('Este navegador no puede codificar video. Prueba en Chrome, Edge o Safari actualizados.','bad');
+    else setMsg('No se pudo crear el video. Prueba con 720p o con un video más corto.','bad');
+  }
+  conv=null; btns.forEach(b=>b.disabled=false); $('cancelVid').hidden=true; $('prog').hidden=true;
+}
+$('expVid').onclick=exportVideo;
+$('cancelVid').onclick=()=>{ if(conv) conv.cancel(); };
+let lastVid=null;
+async function saveVideo(blob,name){
+  const url=URL.createObjectURL(blob);
+  $('resnote').textContent='Si no se descargó solo, usa el botón de abajo o el menú del video.';
+  $('resimg').hidden=true; const rv=$('resvid'); rv.hidden=false; rv.src=url; $('result').hidden=false;
+  lastVid=new File([blob],name,{type:'video/mp4'});
+  $('shareVid').hidden=!(navigator.canShare&&navigator.canShare({files:[lastVid]}));
+  try{ const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); }catch(e){}
+  setMsg('Listo: '+name,'ok');
+}
+$('shareVid').onclick=async()=>{ if(!lastVid) return; try{ await navigator.share({files:[lastVid]}); }catch(e){} };
 
 /* ---------- controls ---------- */
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{
@@ -528,6 +681,8 @@ $('cfile').addEventListener('change',e=>{
 /* ---------- export ---------- */
 function setMsg(t,cls){const m=$('msg');m.textContent=t;m.className='msg'+(cls?' '+cls:'');}
 async function save(blob,name){
+  $('resnote').textContent='Si no se descargó solo: mantén presionada la imagen y elige Guardar.';
+  $('resimg').hidden=false; $('resvid').hidden=true; $('shareVid').hidden=true;
   $('resimg').src=URL.createObjectURL(blob); $('result').hidden=false;
   let dl=null; try{ dl=window.claude?.use?await window.claude.use('downloads'):null; }catch(e){}
   if(dl){ try{ await dl.save({filename:name,data:blob}); setMsg('Descargado: '+name,'ok'); }
@@ -537,6 +692,7 @@ async function save(blob,name){
 }
 async function exportIt(full){
   const bF=$('expFull'),bO=$('expOnly'); bF.disabled=bO.disabled=true; setMsg('Generando…');
+  if(S.video) await seekTo(S.video.t);
   await loadFont(); await new Promise(r=>setTimeout(r,30));
   try{
     let W=S.bgW,H=S.bgH; const cap=6000/Math.max(W,H); if(cap<1){W=Math.round(W*cap);H=Math.round(H*cap);}
