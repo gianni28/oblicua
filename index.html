@@ -405,7 +405,7 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
 <script>
 (() => {
 const $ = id => document.getElementById(id);
-const view=$('view'), vctx=view.getContext('2d',{willReadFrequently:true});
+const view=$('view'), vctx=view.getContext('2d'); // sin willReadFrequently: así queda en la GPU y reproducir el video no copia cada fotograma a la CPU
 const stage=$('stage'), stagebox=$('stagebox'), loupe=$('loupe'), lctx=loupe.getContext('2d');
 const handles=[...document.querySelectorAll('.h')];
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
@@ -765,7 +765,7 @@ function useSample(){
   $('tag').hidden=false; $('result').hidden=true; layout();
 }
 function loadBgFile(f){
-  if(f&&(/^video\//.test(f.type)||/\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name||''))){ loadVideo(f); return; }
+  if(f&&(/^video\//.test(f.type)||/\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name||'')))return loadVideo(f);
   if(!f||!/^image\//.test(f.type)){ setMsg('Ese archivo no es una foto ni un video. Prueba con JPG, PNG o MP4.','bad'); return; }
   const url=URL.createObjectURL(f), im=new Image();
   im.onload=()=>{ dropVideo(); S.prog.moved=S.prog.saved=false; S.bg=im; S.bgW=im.naturalWidth; S.bgH=im.naturalHeight; S.isSample=false; S.q=defaultQ();
@@ -807,7 +807,7 @@ function recUI(){
 async function recCamera(){
   recStopStream(); $('recGo').disabled=true; $('recErr').hidden=true; $('recInfo').textContent='Preparando la cámara…';
   const big=$('recRes').value==='2160', W=big?3840:1920, H=big?2160:1080;
-  const video={facingMode:{ideal:REC.facing},width:{ideal:W},height:{ideal:H},frameRate:{ideal:30}};
+  const video={facingMode:{ideal:REC.facing},width:{ideal:W},height:{ideal:H},frameRate:{ideal:30,max:30}};
   const music={echoCancellation:false,noiseSuppression:false,autoGainControl:false};
   let err=null;
   for(const c of [{video,audio:music},{video,audio:true},{video,audio:false}]){
@@ -839,13 +839,13 @@ async function recToggle(){
   if(REC.rec){ REC.rec.stop(); return; }
   if(!REC.stream) return;
   const st=REC.stream.getVideoTracks()[0].getSettings(), px=(st.width||1920)*(st.height||1080);
-  const vbps=Math.round(Math.min(60e6,Math.max(12e6,18e6*px/(1920*1080)))), mime=recMime();
+  const vbps=Math.round(Math.min(40e6,Math.max(12e6,16e6*px/(1920*1080)))), mime=recMime();
   REC.chunks=[]; REC.cancel=false;
   try{ REC.rec=new MediaRecorder(REC.stream,{...(mime?{mimeType:mime}:{}),videoBitsPerSecond:vbps,audioBitsPerSecond:192000}); }
   catch(e){ try{ REC.rec=new MediaRecorder(REC.stream); }catch(e2){ $('recErr').hidden=false; $('recErr').textContent='Este navegador no puede grabar video.'; return; } }
   REC.rec.ondataavailable=e=>{ if(e.data&&e.data.size) REC.chunks.push(e.data); };
   REC.rec.onstop=recDone;
-  REC.rec.start(1000); REC.t0=performance.now();
+  REC.rec.start(); REC.t0=performance.now(); REC.res=$('recRes').value;
   REC.timer=setInterval(()=>{ $('recTime').textContent=fmtT((performance.now()-REC.t0)/1000).replace(/\.\d$/,''); },250);
   $('recTime').textContent='0:00';
   try{ REC.lock=navigator.wakeLock?await navigator.wakeLock.request('screen'):null; }catch(e){}
@@ -857,7 +857,16 @@ function recDone(){
   recUI(); recClose();
   const blob=new Blob(REC.chunks,{type}); REC.chunks=[];
   if(cancel||!blob.size) return;
-  loadBgFile(new File([blob],'oblicua-grabacion.'+(/mp4/.test(type)?'mp4':'webm'),{type}));
+  const f=new File([blob],'oblicua-grabacion.'+(/mp4/.test(type)?'mp4':'webm'),{type});
+  const res=REC.res; Promise.resolve(loadBgFile(f)).then(()=>recCheck(f,res));
+}
+/** Si el celular no alcanzó a grabar a esa calidad, el archivo queda con pocos fotogramas: avisamos. */
+async function recCheck(f,res){
+  try{
+    const M=await loadMB(), t=await new M.Input({source:new M.BlobSource(f),formats:M.ALL_FORMATS}).getPrimaryVideoTrack();
+    const fps=(await t.computePacketStats()).averagePacketRate;
+    if(fps&&fps<24) setTMsg('La grabación quedó a '+Math.round(fps)+' fotogramas por segundo: tu celular no alcanzó a grabar '+(res==='2160'?'en 4K':'a esa calidad')+' desde el navegador. '+(res==='2160'?'Prueba en 1080p, o graba con la app Cámara y súbelo desde la Fototeca.':'Prueba grabar con la app Cámara y subirlo desde la Fototeca.'),'bad');
+  }catch(e){}
 }
 if(canRec){
   $('recOpen').hidden=false;
