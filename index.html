@@ -665,7 +665,10 @@ function updateLayer(P,W,H,SP){
 /** Opacidad del letrero en el segundo t según la línea de tiempo (1 si no hay video). */
 function timeAlpha(t){
   if(!S.video) return 1;
-  const t0=S.video.t0, t1=S.video.t1, f=$('fade').checked?.4:0;
+  // Si el letrero empieza al inicio o termina al final del video, ahí no hay transición: se ve desde el primer
+  // fotograma hasta el último (la duración del navegador puede quedar un poco antes del último fotograma).
+  const V=S.video, E=.05, atStart=V.t0<=E, atEnd=V.t1>=V.dur-E;
+  const t0=atStart?-Infinity:V.t0, t1=atEnd?Infinity:V.t1, f=$('fade').checked?.4:0;
   if(t<t0-1e-3||t>t1+1e-3) return 0;
   if(!f) return 1;
   return Math.max(0,Math.min(1,(t-t0)/f,(t1-t)/f));

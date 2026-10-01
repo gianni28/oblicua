@@ -434,6 +434,9 @@ export function merge(T,proc,fw,bw,keyT,w,h,keyU=[]){
     if(valid(i))continue;
     let a=i-1;while(a>=0&&!valid(a)&&!done[a])a--;
     let b=i+1;while(b<n&&!valid(b)&&!done[b])b++;
+    // en los extremos del video (o junto a un hueco) un fotograma sin analizar toma el valor del vecino
+    if((a<0||!valid(a))&&b<n&&valid(b)&&!done[i]&&T[b]-T[i]<.1){for(let j=0;j<8;j++)Q[i*8+j]=Q[b*8+j];continue;}
+    if((b>=n||!valid(b))&&a>=0&&valid(a)&&!done[i]&&T[i]-T[a]<.1){for(let j=0;j<8;j++)Q[i*8+j]=Q[a*8+j];continue;}
     if(a<0||b>=n||!valid(a)||!valid(b))continue;
     let lostRun=0;for(let j=a+1;j<b;j++)if(done[j])lostRun++;
     if(lostRun>2||T[b]-T[a]>.2)continue;
