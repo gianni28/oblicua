@@ -545,35 +545,41 @@ const fmtT=t=>{t=Math.max(0,t||0);const m=Math.floor(t/60),s=t-m*60;return m+':'
 let MB=null;
 const loadMB=async()=>MB||(MB=await import('./vendor/mediabunny.min.js'));
 function dropVideo(){
-  if(S.video){ try{S.video.el.removeAttribute('src');S.video.el.load();URL.revokeObjectURL(S.video.url);}catch(e){} }
+  if(S.video){ try{S.video.el.removeAttribute('src');S.video.el.load();S.video.el.remove();URL.revokeObjectURL(S.video.url);}catch(e){} }
   S.video=null; $('scrub').hidden=true; $('vidExp').hidden=true; $('expFull').textContent='Foto completa (JPG)'; $('expFull').classList.add('primary');
 }
 function once(el,ok,bad){return new Promise((res,rej)=>{const a=()=>{c();res();},b=()=>{c();rej(new Error(bad));},c=()=>{el.removeEventListener(ok,a);el.removeEventListener('error',b);};el.addEventListener(ok,a);el.addEventListener('error',b);});}
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
 async function loadVideo(f){
   setMsg('Abriendo el video…');
   const url=URL.createObjectURL(f), el=document.createElement('video');
-  el.muted=true; el.playsInline=true; el.setAttribute('playsinline',''); el.preload='auto'; el.src=url;
+  el.muted=true; el.defaultMuted=true; el.playsInline=true; el.setAttribute('playsinline',''); el.setAttribute('webkit-playsinline','');
+  el.preload='auto';
+  // Safari en iPhone decodifica mejor si el video está dentro de la página.
+  el.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(el); el.src=url;
   try{
-    await once(el,'loadeddata','load');
+    await withTimeout(once(el,'loadedmetadata','load'),20000);
+    if(!el.videoWidth||!el.videoHeight) throw new Error('size');
     let dur=el.duration;
     if(!isFinite(dur)){ try{ const M=await loadMB(); const inp=new M.Input({source:new M.BlobSource(f),formats:M.ALL_FORMATS}); dur=await inp.computeDuration(); }catch(e){ dur=0; } }
-    if(!el.videoWidth||!el.videoHeight) throw new Error('size');
+    // Algunos navegadores no muestran fotogramas hasta reproducir un instante.
+    try{ await withTimeout(el.play(),2500); }catch(e){} try{ el.pause(); }catch(e){}
     dropVideo();
     const frame=mk(el.videoWidth,el.videoHeight);
     S.video={file:f,url,el,dur:dur||0,frame,fctx:frame.getContext('2d'),t:0};
-    try{ await el.play(); el.pause(); }catch(e){}
     S.bgW=el.videoWidth; S.bgH=el.videoHeight; S.isSample=false; S.q=defaultQ(); S.bg=frame;
     const vt=$('vt'); vt.max=String(Math.max(.01,S.video.dur)); vt.value='0'; $('vt_o').textContent=fmtT(0);
     $('tFrom').value='0'; $('tTo').value=(S.video.dur||0).toFixed(1); $('tFrom').max=$('tTo').max=String(S.video.dur||0);
     $('vq').value=Math.min(S.bgW,S.bgH)>1080?'1080':'0';
     $('scrub').hidden=false; $('vidExp').hidden=false; $('expFull').textContent='Este fotograma (JPG)'; $('expFull').classList.remove('primary');
     $('tag').hidden=true; $('result').hidden=true;
-    await seekTo(Math.min(.05,S.video.dur/2));
     layout();
     setMsg('Video cargado. Elige un fotograma y lleva los 4 puntos a las esquinas.','ok');
+    await seekTo(Math.min(.05,S.video.dur/2));
   }catch(e){
-    URL.revokeObjectURL(url);
-    setMsg('Tu navegador no pudo abrir ese video. Prueba con un MP4 o un video grabado con el celular.','bad');
+    el.remove(); URL.revokeObjectURL(url);
+    setMsg('Tu navegador no pudo abrir ese video ('+(e&&e.message||'error')+'). Prueba con un MP4 o un video grabado con el celular.','bad');
   }
 }
 let seeking=false,wantT=null;
@@ -583,7 +589,9 @@ async function seekTo(t){
   try{
     while(wantT!==null&&S.video===V){
       const tt=wantT; wantT=null;
-      if(Math.abs(V.el.currentTime-tt)>.001){ V.el.currentTime=tt; await Promise.race([once(V.el,'seeked','seek'),new Promise(r=>setTimeout(r,1500))]); }
+      if(Math.abs(V.el.currentTime-tt)>.001){ V.el.currentTime=tt; try{ await withTimeout(once(V.el,'seeked','seek'),3000); }catch(e){} }
+      if(V.el.readyState<2){ try{ await withTimeout(once(V.el,'loadeddata','load'),3000); }catch(e){} }
+      if(V.el.requestVideoFrameCallback){ try{ await withTimeout(new Promise(r=>V.el.requestVideoFrameCallback(()=>r())),300); }catch(e){} }
       V.fctx.drawImage(V.el,0,0,V.frame.width,V.frame.height); V.t=tt; render();
     }
   }catch(e){} finally{ seeking=false; }
