@@ -57,6 +57,53 @@ header.top{display:flex;flex-direction:column;gap:8px}
 .loupe{position:absolute;top:12px;width:120px;height:120px;border-radius:50%;border:2px solid #ffa94d;box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:4;background:#000}
 .drop{position:absolute;inset:10px;border:2px dashed #ffa94d;border-radius:8px;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;font-weight:700;z-index:5;pointer-events:none}
 .stagehint{margin:8px 2px 0;color:var(--muted);font-size:13px}
+.guide{display:flex;align-items:center;gap:12px;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);border:1px solid var(--accent);font-size:15px;line-height:1.35}
+.guide .gn{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#1b1d22;font-weight:800;font-size:14px}
+.guide p{margin:0;flex:1;font-weight:500}
+.guide .go{flex:none;font:inherit;font-size:13px;font-weight:700;border:0;border-radius:9px;padding:7px 10px;background:var(--btn);color:var(--btn-ink);cursor:pointer}
+@media (min-width:920px){.guide .go{display:none}}
+.steps li{cursor:pointer;transition:border-color .2s,background .2s}
+.steps li.now{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.steps li.done b{background:var(--ok);color:#fff}
+.gtitle .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:11px;margin-right:6px;vertical-align:1px;letter-spacing:0}
+.group.now .gtitle{color:var(--ink)}
+.group.now .gtitle .n{background:var(--accent);color:#1b1d22}
+.group.done .gtitle .n{background:var(--ok);color:#fff}
+details.more{border:1px solid var(--line);border-radius:12px;padding:0 12px}
+details.more>summary{cursor:pointer;padding:11px 0;font-size:14px;font-weight:700;color:var(--muted);list-style-position:inside}
+details.more[open]{padding-bottom:12px}
+details.more[open]>summary{color:var(--ink)}
+details.more>div{display:flex;flex-direction:column;gap:10px}
+details.flat{border:0;padding:0}
+details.flat>summary{display:none}
+.trackbox{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.trackbox .l{color:var(--ink);font-weight:700}
+.tlhint{margin:0;font-size:12px;color:var(--muted)}
+.trackbox .msg:empty{display:none}
+.linkbtn{font:inherit;font-size:inherit;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.stage.picking{cursor:crosshair}
+#detect[aria-pressed=true]{background:var(--accent);color:#1b1d22;border-color:transparent}
+.rec{position:fixed;inset:0;z-index:50;background:#000;color:#fff;display:flex;flex-direction:column}
+.rec video{flex:1;min-height:0;width:100%;object-fit:contain;background:#000}
+.rtop{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.rtop span{background:rgba(0,0,0,.6);padding:5px 11px;border-radius:99px;font-size:13px;font-weight:700}
+.rleft{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.rset{display:flex;gap:6px;pointer-events:auto;align-items:flex-start}
+.rset select{font:inherit;font-size:14px;font-weight:700;background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:99px;padding:6px 10px;width:auto}
+.rset select:disabled{opacity:.4}
+.rtop .rtime{background:#e03131}
+.rerr{position:absolute;top:35%;left:16px;right:16px;margin:0;text-align:center;background:rgba(0,0,0,.75);padding:14px;border-radius:12px;font-size:15px}
+.rbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 18px)}
+.rbar .rbtn{font:inherit;font-size:15px;font-weight:700;background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:10px;padding:10px 12px;cursor:pointer;justify-self:start}
+.rbar .rbtn:disabled,.rbar select:disabled{opacity:.4}
+.rside{display:flex;gap:8px;justify-self:end;align-items:center}
+.rshot{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.rshot span{width:58px;height:58px;border-radius:50%;background:#e03131;transition:all .2s}
+.rshot.on span{width:30px;height:30px;border-radius:7px}
+.rshot:disabled{opacity:.4}
+.rec :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.guide small{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:560px){.steps{display:none}}
 
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:16px}
 .group{display:flex;flex-direction:column;gap:10px}
@@ -124,6 +171,7 @@ footer{color:var(--muted);font-size:13px;text-align:center}
 .btn.sm{padding:8px 11px;font-size:13px;border-radius:9px}
 .tl{position:relative;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;padding-bottom:2px}
 .film{display:block;width:100%;height:46px;border-radius:8px;background:repeating-linear-gradient(90deg,var(--field) 0 40px,var(--line) 40px 41px)}
+.trk{display:block;width:100%;height:6px;margin-top:4px;border-radius:3px;background:var(--field)}
 .lane{position:relative;height:36px;margin-top:6px;border-radius:8px;background:var(--field)}
 .clip{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:space-between;cursor:grab;min-width:28px;touch-action:none}
 .clip.ghost{opacity:.55}
@@ -153,20 +201,23 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
       <h1>Oblicua</h1>
     </div>
     <p class="lede">Pon texto o una imagen sobre cualquier superficie de una foto o un video, con su mismo ángulo: un letrero, una pared, una pantalla, un cuadro o el atril de un piano.</p>
-    <ol class="steps">
-      <li><b>1</b>Sube tu foto o video</li>
-      <li><b>2</b>Lleva los 4 puntos a las esquinas</li>
-      <li><b>3</b>Escribe o sube tu imagen</li>
-      <li><b>4</b>Descarga</li>
+    <ol class="steps" id="steps">
+      <li data-s="1"><b>1</b>Sube tu foto o video</li>
+      <li data-s="2"><b>2</b>Marca la superficie</li>
+      <li data-s="3"><b>3</b>Escribe o sube tu imagen</li>
+      <li data-s="4"><b>4</b>Descarga</li>
     </ol>
   </header>
 
   <div class="app">
     <div class="stagecol">
+      <div class="guide" id="guide" role="status" aria-live="polite"><span class="gn" id="gnum">1</span><p><small id="gof">Paso 1 de 4</small><span id="gtext"></span></p><button class="go" type="button" id="ggo">Ir al paso</button></div>
       <div class="stagebox" id="stagebox">
         <div class="stage" id="stage">
           <canvas id="view"></canvas>
           <span class="tag" id="tag">Ejemplo</span>
+          <span class="tag" id="ltag" hidden>Aquí no encontré la superficie</span>
+          <span class="tag" id="ptag" hidden></span>
           <div class="h" data-i="0" tabindex="0" role="slider" aria-label="Esquina superior izquierda"></div>
           <div class="h" data-i="1" tabindex="0" role="slider" aria-label="Esquina superior derecha"></div>
           <div class="h" data-i="2" tabindex="0" role="slider" aria-label="Esquina inferior derecha"></div>
@@ -185,27 +236,57 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
         </div>
         <div class="tl" id="tl" aria-label="Línea de tiempo">
           <canvas class="film" id="film"></canvas>
+          <canvas class="trk" id="trk" hidden aria-label="Dónde se encontró la superficie"></canvas>
           <div class="lane"><div class="clip" id="clip"><span class="grip" data-g="in" aria-label="Inicio del letrero"></span><span class="clbl" id="clbl">Letrero</span><span class="grip" data-g="out" aria-label="Fin del letrero"></span></div></div>
           <div class="ph" id="ph"><span></span></div>
         </div>
+        <p class="tlhint">Toca la película para ir a un momento. La barra naranja es cuándo se ve el letrero: arrastra sus bordes para cambiarlo.</p>
       </div>
-      <p class="stagehint">Arrastra los puntos naranjas a las esquinas de la superficie. El cuadrado del centro mueve todo. En computador también puedes arrastrar o pegar (Ctrl+V) una foto. Con un video: dale play para verlo con el letrero, toca la película para ir a un momento y arrastra la barra naranja para decidir cuándo aparece y desaparece.</p>
+      <p class="stagehint">El cuadrado del centro mueve todo y al arrastrar un punto aparece una lupa. En computador también puedes arrastrar aquí un archivo o pegar una foto (Ctrl+V).</p>
     </div>
 
     <div class="panel">
-      <section class="group">
-        <h2 class="gtitle">Foto o video</h2>
+      <section class="group" id="st1">
+        <h2 class="gtitle"><span class="n">1</span>Tu foto o video</h2>
         <div class="row">
           <span class="btn primary grow">Subir foto o video<input type="file" id="bgfile" accept="image/*,video/*" aria-label="Subir foto o video de fondo"></span>
+          <button class="btn" type="button" id="recOpen" hidden>Grabar video</button>
           <button class="btn" type="button" id="sample">Ver ejemplo</button>
+        </div>
+        <p class="note" id="iosNote" hidden></p>
+      </section>
+
+      <section class="group" id="st2">
+        <h2 class="gtitle"><span class="n">2</span>Marca la superficie</h2>
+        <p class="note">Arrastra los 4 puntos naranjas a las esquinas de lo que quieres cubrir: un cuadro, un letrero, una pantalla, un atril. Lo que pongas en el paso 3 toma su mismo ángulo.</p>
+        <div class="row" style="justify-content:space-between">
+          <label class="check"><input type="checkbox" id="outline" checked> Ver contorno</label>
+          <span class="row"><button class="btn sm" type="button" id="detect">Detectar tocando</button><button class="btn sm" type="button" id="resetq">Reiniciar puntos</button></span>
+        </div>
+        <div class="trackbox">
+          <label class="check"><input type="checkbox" id="occ"> Las manos o personas pasan por delante</label>
+          <p class="note" id="occNote">El letrero queda detrás de las personas, como si estuviera de verdad en la superficie. Ideal si tus manos pasan sobre el atril.</p>
+        </div>
+        <div class="trackbox" id="trackSec" hidden>
+        <span class="l">¿La cámara se mueve?</span>
+        <p class="note" id="tnote"></p>
+        <label class="check"><input type="checkbox" id="refl"> Es lisa o refleja (pantalla apagada, vidrio, espejo)</label>
+        <div class="row">
+          <button class="btn primary grow" type="button" id="trackBtn">Seguir la superficie</button>
+          <button class="btn" type="button" id="trackCancel" hidden>Cancelar</button>
+          <button class="btn" type="button" id="trackOff" hidden>Quitar seguimiento</button>
+        </div>
+        <div class="prog" id="tprog" hidden><span id="tprogBar"></span></div>
+        <p class="msg" id="tmsg" role="status"></p>
         </div>
       </section>
 
-      <section class="group">
-        <h2 class="gtitle">Qué quieres poner</h2>
+      <section class="group" id="st3">
+        <h2 class="gtitle"><span class="n">3</span>Qué quieres poner</h2>
         <div class="seg" role="group" aria-label="Tipo de contenido">
           <button type="button" data-mode="text" aria-pressed="true">Texto</button>
           <button type="button" data-mode="image" aria-pressed="false">Imagen</button>
+          <button type="button" data-mode="video" aria-pressed="false">Video</button>
         </div>
 
         <div id="textCtl" class="tstack">
@@ -245,6 +326,9 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
             </div>
             <div class="mini"><label for="vpos">Altura</label><input type="range" id="vpos" min="5" max="95" value="50"><output id="vpos_o">50%</output></div>
             <label class="check"><input type="checkbox" id="shadow"> Sombra suave</label>
+            <div class="field" id="animBox" hidden><label class="l" for="anim">Cómo aparece el texto en el video</label>
+              <select id="anim"><option value="">De una vez</option><option value="type">Máquina de escribir</option><option value="letters">Letra por letra</option><option value="up">Subiendo</option><option value="zoom">Acercándose</option></select></div>
+            <p class="note" id="styleNote">Oblicua recuerda tu estilo (fuentes, color, tamaños) para la próxima vez. <button class="linkbtn" type="button" id="styleReset">Volver al estilo original</button></p>
           </div>
         </div>
 
@@ -252,24 +336,35 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
           <span class="btn primary">Subir imagen (logo, foto, póster)<input type="file" id="cfile" accept="image/*" aria-label="Subir imagen para colocar"></span>
           <p class="note" id="cname">Las esquinas de tu imagen se pegan a los 4 puntos. Si usas un PNG con fondo transparente, solo se ve el dibujo.</p>
         </div>
+
+        <div id="vidCtl" class="group" style="border:0;padding:0" hidden>
+          <span class="btn primary">Subir video para poner encima<input type="file" id="cvfile" accept="video/*" aria-label="Subir video para colocar"></span>
+          <p class="note" id="cvname">Las esquinas del video se pegan a los 4 puntos: puedes "encender" un televisor apagado o poner un video en un cuadro. Empieza cuando aparece el letrero (la barra naranja).</p>
+          <label class="check"><input type="checkbox" id="cvloop" checked> Repetir si es más corto</label>
+          <p class="note">Se mantiene el sonido del video de fondo; el del video puesto no se usa.</p>
+        </div>
       </section>
 
-      <section class="group">
-        <h2 class="gtitle">Apariencia</h2>
+        <div class="trackbox" id="lightBox" hidden>
+          <label class="check"><input type="checkbox" id="light"> Tomar la luz de la escena</label>
+          <p class="note" id="lightNote"></p>
+        </div>
+        <details class="more">
+        <summary>Más ajustes: opacidad y fusión</summary>
+        <div>
         <div class="two">
           <div class="field"><label class="l" for="op">Opacidad</label><input type="range" id="op" min="10" max="100" value="92"></div>
           <div class="field"><label class="l" for="blend">Fusión</label>
             <select id="blend"><option value="auto" selected>Automática</option><option value="multiply">Impreso</option><option value="over">Normal</option></select></div>
         </div>
         <p class="note" id="blendNote" hidden>Con "Impreso" los colores claros desaparecen (el blanco multiplicado no cambia nada). Usa "Automática" o "Normal".</p>
-        <div class="row" style="justify-content:space-between">
-          <label class="check"><input type="checkbox" id="outline" checked> Ver contorno</label>
-          <button class="btn" type="button" id="resetq">Reiniciar puntos</button>
+        <p class="note">"Impreso" hace que el texto tome la textura y la luz de la superficie, como si estuviera pintado en ella.</p>
         </div>
+        </details>
       </section>
 
-      <section class="group">
-        <h2 class="gtitle">Descargar</h2>
+      <section class="group" id="st4">
+        <h2 class="gtitle"><span class="n">4</span>Descarga</h2>
         <div class="vbox" id="vidExp" hidden>
           <span class="l" style="color:var(--ink);font-weight:700">Video con el letrero</span>
           <p class="note" style="margin:0">Ajusta los tiempos en la barra naranja de abajo del video o escríbelos aquí.</p>
@@ -279,20 +374,29 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
           </div>
           <div class="two">
             <label class="check"><input type="checkbox" id="fade" checked> Aparecer suave</label>
-            <select id="vq" aria-label="Resolución del video"><option value="1080">1080p (recomendado)</option><option value="720">720p (más rápido)</option><option value="0">Original</option></select>
+            <select id="vq" aria-label="Resolución del video"><option value="0" selected>Calidad original</option><option value="1080">1080p (más liviano)</option><option value="720">720p (más rápido)</option></select>
+          </div>
+          <div class="two">
+            <select id="vfmt" aria-label="Formato del video"><option value="0">Formato original</option><option value="0.5625">Vertical 9:16 (Reels, TikTok, Shorts)</option><option value="1">Cuadrado 1:1</option><option value="1.7778">Horizontal 16:9</option></select>
+            <div class="field" id="vcropBox" hidden><label class="l" for="vcrop">Encuadre</label><input type="range" id="vcrop" min="0" max="100" value="50"></div>
           </div>
           <div class="row">
             <button class="btn primary grow" type="button" id="expVid">Descargar video (MP4)</button>
             <button class="btn" type="button" id="cancelVid" hidden>Cancelar</button>
           </div>
           <div class="prog" id="prog" hidden><span id="progBar"></span></div>
-          <p class="note">Mantiene el audio original. El letrero queda fijo, así que la cámara debe estar quieta.</p>
+          <p class="note" id="vnote">Mantiene el audio original.</p>
         </div>
+        <details class="more flat" id="imgExp" open>
+        <summary>Descargar solo un fotograma o el contenido en PNG</summary>
+        <div>
         <div class="row">
           <button class="btn primary grow" type="button" id="expFull">Foto completa (JPG)</button>
           <button class="btn grow" type="button" id="expOnly">Solo el contenido (PNG transparente)</button>
         </div>
         <p class="note">"Solo el contenido" tiene el mismo tamaño que tu foto, así que en un editor de video lo pones encima, lo estiras a pantalla completa y cae en su sitio.</p>
+        </div>
+        </details>
         <p class="msg" id="msg" role="status"></p>
         <div class="result" id="result" hidden>
           <span class="note" id="resnote">Si no se descargó solo: mantén presionada la imagen y elige Guardar.</span>
@@ -305,7 +409,10 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
   </div>
 
   <section class="tips" aria-label="Consejos">
-    <div class="tip"><h3>Para videos</h3><p>Sube el video, elige un fotograma donde se vea bien la superficie y ajusta los puntos. "Descargar video" lo devuelve con el letrero puesto y su audio. Funciona si la cámara no se mueve.</p></div>
+    <div class="tip"><h3>Para videos</h3><p>Sube el video, elige un fotograma donde se vea bien la superficie y ajusta los puntos. Si la cámara se mueve, pulsa "Seguir la superficie": Oblicua la busca en cada fotograma, aunque salga del encuadre y vuelva a entrar. "Descargar video" lo devuelve con el letrero puesto y su audio.</p></div>
+    <div class="tip"><h3>Seguir una superficie</h3><p>Funciona mejor con superficies que tienen dibujo o textura (un cuadro, un póster, una portada). Para una pantalla apagada, un vidrio o un espejo marca "Es lisa o refleja": así sigue el marco y no los reflejos. Si en algún momento el letrero se desvía, pausa ahí, arrastra los puntos a su sitio y pulsa "Actualizar seguimiento".</p></div>
+    <div class="tip"><h3>Más realismo</h3><p>"Tomar la luz de la escena" hace que el letrero se aclare u oscurezca con la luz del video, y con "Video" en "Qué quieres poner" puedes encender un televisor apagado o poner un video dentro de un cuadro. "Detectar tocando" pone las esquinas por ti.</p></div>
+    <div class="tip"><h3>Manos por delante</h3><p>Con "Las manos o personas pasan por delante", el letrero queda detrás de tus manos, brazos o cuerpo, como si estuviera impreso en la superficie. La primera vez descarga un detector de personas de 16 MB que corre en tu dispositivo.</p></div>
     <div class="tip"><h3>Que se vea real</h3><p>Con colores oscuros, la fusión automática usa "Impreso": el texto toma la textura y la luz de la superficie. Con colores claros (como blanco sobre un fondo negro) cambia sola a "Normal", porque "Impreso" solo puede oscurecer.</p></div>
     <div class="tip"><h3>Precisión</h3><p>Al arrastrar un punto aparece una lupa. En computador puedes seleccionar un punto y moverlo con las flechas del teclado (Shift para pasos grandes).</p></div>
     <div class="tip"><h3>Privado</h3><p>Todo se procesa en tu navegador. Tus fotos y videos no se suben a ningún servidor.</p></div>
@@ -314,10 +421,27 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
   <footer>Hecho por Gianni</footer>
 </div>
 
+<div class="rec" id="rec" hidden role="dialog" aria-modal="true" aria-label="Grabar video">
+  <video id="recPrev" playsinline muted autoplay></video>
+  <div class="rtop">
+    <div class="rleft"><span id="recInfo">Preparando la cámara…</span><span class="rtime" id="recTime" hidden>0:00</span></div>
+    <div class="rset">
+      <select id="recRes" aria-label="Resolución"><option value="1080">1080p</option><option value="2160">4K</option></select>
+      <select id="recFps" aria-label="Fotogramas por segundo"><option value="60">60 fps</option><option value="30">30 fps</option></select>
+    </div>
+  </div>
+  <p class="rerr" id="recErr" hidden></p>
+  <div class="rbar">
+    <button class="rbtn" type="button" id="recClose">Cancelar</button>
+    <button class="rshot" type="button" id="recGo" aria-label="Empezar a grabar" disabled><span></span></button>
+    <div class="rside"><button class="rbtn" type="button" id="recFlip" aria-label="Cambiar de cámara">Girar</button></div>
+  </div>
+</div>
+
 <script>
 (() => {
 const $ = id => document.getElementById(id);
-const view=$('view'), vctx=view.getContext('2d',{willReadFrequently:true});
+const view=$('view'), vctx=view.getContext('2d'); // sin willReadFrequently: así queda en la GPU y reproducir el video no copia cada fotograma a la CPU
 const stage=$('stage'), stagebox=$('stagebox'), loupe=$('loupe'), lctx=loupe.getContext('2d');
 const handles=[...document.querySelectorAll('.h')];
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
@@ -325,7 +449,9 @@ const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;r
 const free=c=>{ if(c){ c.width=0; c.height=0; } };
 const SCR=mk(1,1), SCRX=SCR.getContext('2d',{willReadFrequently:true});
 
-const S={video:null,bg:null,bgW:1600,bgH:1000,isSample:true,q:null,mode:'text',color:'#16181d',align:'center',img:null,imgSrc:null,sampleQ:null};
+let bgVer=0; // cambia cada vez que cambia la foto o el video
+const S={video:null,bg:null,bgW:1600,bgH:1000,isSample:true,q:null,mode:'text',color:'#16181d',align:'center',img:null,imgSrc:null,sampleQ:null,
+  prog:{moved:false,content:false,saved:false}}; // lo que ya hizo la persona, para guiarla al siguiente paso
 
 /* ---------- geometry ---------- */
 function sq2q(p){
@@ -398,7 +524,13 @@ function styleSel(sel){const v=sel.value==='same'?$('font').value:sel.value;cons
 const fstr=(f,px)=>`${f.st==='italic'?'italic ':''}${f.w} ${px}px "${f.fam}", system-ui, sans-serif`;
 async function loadFont(){try{await Promise.all([document.fonts.load(fstr(fontSpec('title'),60)),document.fonts.load(fstr(fontSpec('sub'),60))]);}catch(e){}}
 
-function textSource(Ws,Hs){
+/** Progreso (0…1) de la animación de entrada del texto en el segundo t; 1 = texto completo. */
+const ANIM_DUR=1.2;
+function animP(t){
+  const V=S.video; if(!V||S.mode!=='text'||!$('anim').value) return 1;
+  const t0=V.t0<=.05?0:V.t0; return Math.max(0,Math.min(1,(t-t0)/ANIM_DUR));
+}
+function textSource(Ws,Hs,p=1){
   const c=SCR,g=SCRX; c.width=Ws; c.height=Hs; g.setTransform(1,0,0,1,0,0); g.shadowColor='transparent'; g.shadowBlur=0; g.shadowOffsetY=0; g.clearRect(0,0,Ws,Hs);
   const main=$('txt').value.replace(/\s+$/,'').split('\n').filter((l,i,a)=>l.trim()||a.length>1);
   let sub=$('sub').value.trim(); const sr=$('subsize').value/100, caps=$('subcaps').checked; if(caps) sub=sub.toLocaleUpperCase('es');
@@ -415,12 +547,32 @@ function textSource(Ws,Hs){
     g.fillStyle=S.color; g.textBaseline='middle'; g.textAlign=S.align;
     const x=S.align==='left'?pad:S.align==='right'?Ws-pad:Ws/2;
     const bh=bhB*k; let y=Hs*($('vpos').value/100)-bh/2; y=Math.max(Hs*.02,Math.min(y,Hs*.98-bh));
+    const TOTAL=items.reduce((s,i)=>s+[...i.t].length,0); let done=0;
     items.forEach(i=>{
       const fs=base*i.r*k; if(i.sub&&hasBoth) y+=gapB*k;
       g.font=fstr(fOf(i),fs);
       if($('shadow').checked){g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=fs*.12;g.shadowOffsetY=fs*.05;}
       if('letterSpacing' in g) g.letterSpacing=(LS(i)*fs)+'px';
-      g.fillText(i.t,x,y+fs*lh/2); y+=fs*lh;
+      const yy=y+fs*lh/2, an=p<1?$('anim').value:'';
+      if(!an) g.fillText(i.t,x,yy);
+      else{
+        const e=1-Math.pow(1-p,3), full=g.measureText(i.t).width, x0=S.align==='left'?x:S.align==='right'?x-full:x-full/2;
+        if(an==='up'||an==='zoom'){
+          g.save(); g.globalAlpha=e;
+          if(an==='up') g.translate(0,(1-e)*Hs*.12); else { const sc=.8+.2*e, cy=yy; g.translate(Ws/2,cy); g.scale(sc,sc); g.translate(-Ws/2,-cy); }
+          g.fillText(i.t,x,yy); g.restore();
+        } else {
+          // letra por letra: cada letra con su propia aparición, en orden a lo largo de todas las líneas
+          const n=[...i.t].length, chars=[...i.t]; g.textAlign='left';
+          for(let k=0;k<n;k++){
+            const q=an==='type'?(p*TOTAL>=done+k+1?1:0):Math.max(0,Math.min(1,(p*(TOTAL+5)-(done+k))/5));
+            if(q<=0) break;
+            g.globalAlpha=q; g.fillText(chars[k],x0+g.measureText(chars.slice(0,k).join('')).width,yy);
+          }
+          g.globalAlpha=1; g.textAlign=S.align; done+=n;
+        }
+      }
+      y+=fs*lh;
     });
   }
   const out={d:g.getImageData(0,0,Ws,Hs).data,w:Ws,h:Hs}; c.width=1; c.height=1; return out;
@@ -438,13 +590,84 @@ function placeholder(){
   g.fillStyle='#f08c00'; g.font='700 64px system-ui,sans-serif'; g.textAlign='center'; g.textBaseline='middle';
   g.fillText('Sube tu imagen',400,250); const r=imageSourceFrom(c); free(c); return r;
 }
-let PH=null;
-function getSource(P,maxDim){
+let PH=null,PHV=null;
+function getSource(P,maxDim,p=1){
   if(S.mode==='image') return S.imgSrc||(PH=PH||placeholder());
+  if(S.mode==='video') return S.cvid&&S.cvid.ready?S.cvid.src:(PHV=PHV||vidPlaceholder());
   const {aspect,wide}=quadInfo(P);
   let Ws=Math.round(Math.min(maxDim,Math.max(64,wide*1.25))), Hs=Math.round(Ws/aspect);
   if(Hs>maxDim){Hs=maxDim;Ws=Math.round(Hs*aspect);}
-  return textSource(Math.max(16,Ws),Math.max(16,Hs));
+  return textSource(Math.max(16,Ws),Math.max(16,Hs),p);
+}
+
+function vidPlaceholder(){
+  const c=mk(800,500),g=c.getContext('2d');
+  g.fillStyle='rgba(240,140,0,.18)'; g.fillRect(0,0,800,500);
+  g.strokeStyle='#f08c00'; g.lineWidth=10; g.setLineDash([30,20]); g.strokeRect(10,10,780,480);
+  g.fillStyle='#f08c00'; g.font='700 64px system-ui,sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+  g.fillText('Sube tu video',400,250); const r=imageSourceFrom(c); free(c); return r;
+}
+/** Un contenido de video ({el,w,h}) como píxeles {d,w,h}, para la deformación por CPU. */
+function pixelsOf(src){
+  if(src.d) return src;
+  const s=Math.min(1,1600/Math.max(src.w,src.h)),w=Math.max(1,Math.round(src.w*s)),h=Math.max(1,Math.round(src.h*s));
+  SCR.width=w; SCR.height=h; SCRX.drawImage(src.el,0,0,w,h);
+  const out={d:SCRX.getImageData(0,0,w,h).data,w,h}; SCR.width=1; SCR.height=1; return out;
+}
+
+/* ---------- video puesto encima ----------
+   En la vista previa es un <video> que avanza sincronizado con el de fondo; al exportar, Mediabunny lo decodifica
+   en orden y se toma el fotograma que toca en cada momento. Empieza cuando aparece el letrero (t0). */
+/** Segundo del video puesto que corresponde al segundo t del video de fondo (o del reloj, si el fondo es una foto). */
+function contentTime(t){
+  const C=S.cvid; if(!C||!C.dur) return 0;
+  let ct=Math.max(0,t-(S.video?S.video.t0:0));
+  if($('cvloop').checked) ct%=C.dur; else ct=Math.min(ct,Math.max(0,C.dur-.04));
+  return ct;
+}
+function syncContentVideo(){
+  const C=S.cvid; if(!C||!C.ready||S.mode!=='video') return;
+  const el=C.el, V=S.video;
+  if(!V){ if(el.paused) el.play().catch(()=>{}); return; } // con una foto de fondo, el video se repite solo
+  const want=contentTime(curT()), playing=!V.el.paused&&timeAlpha(curT())>0&&curT()>=V.t0-1e-3;
+  if(playing){ if(el.paused) el.play().catch(()=>{}); if(Math.abs(el.currentTime-want)>.25) el.currentTime=want; }
+  else { if(!el.paused) el.pause(); if(Math.abs(el.currentTime-want)>.02&&!el.seeking) el.currentTime=want; }
+}
+async function loadContentVideo(f){
+  if(S.cvid){ try{ S.cvid.el.pause(); S.cvid.el.remove(); URL.revokeObjectURL(S.cvid.url); }catch(e){} }
+  const url=URL.createObjectURL(f), el=document.createElement('video');
+  el.muted=true; el.playsInline=true; el.setAttribute('playsinline',''); el.loop=true; el.preload='auto';
+  el.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(el); el.src=url;
+  const C={file:f,url,el,dur:0,ready:false,src:null}; S.cvid=C;
+  try{
+    await withTimeout(once(el,'loadeddata','load'),20000);
+    let dur=el.duration;
+    if(!isFinite(dur)){ try{ const M=await loadMB(); dur=await new M.Input({source:new M.BlobSource(f),formats:M.ALL_FORMATS}).computeDuration(); }catch(e){ dur=0; } }
+    C.dur=dur||0; C.src={el,w:el.videoWidth,h:el.videoHeight}; C.ready=true;
+    el.addEventListener('seeked',render); el.addEventListener('timeupdate',()=>{ if(!S.video) render(); });
+    if(el.requestVideoFrameCallback){ const f2=()=>{ if(S.cvid!==C) return; render(); el.requestVideoFrameCallback(f2); }; el.requestVideoFrameCallback(f2); }
+    S.prog.content=true;
+    $('cvname').textContent=`Video: ${f.name} (${fmtT(C.dur)}). Sus esquinas siguen a los 4 puntos; empieza cuando aparece el letrero.`;
+    pvKey=''; layerKey=''; render();
+  }catch(e){ C.ready=false; $('cvname').textContent='No pude abrir ese video. Prueba con un MP4.'; }
+}
+/** Lector en orden de los fotogramas del video puesto, para la exportación. */
+async function contentReader(M){
+  const C=S.cvid, input=new M.Input({source:new M.BlobSource(C.file),formats:M.ALL_FORMATS}), track=await input.getPrimaryVideoTrack();
+  const sc=Math.min(1,1920/Math.max(track.displayWidth,track.displayHeight)), w=Math.max(2,Math.round(track.displayWidth*sc)), h=Math.max(2,Math.round(track.displayHeight*sc));
+  const sink=new M.CanvasSink(track,{width:w,height:h,fit:'fill',poolSize:3});
+  let it=null,cur=null,next=null,last=-1;
+  const restart=async()=>{ if(it&&it.return) await it.return(); it=sink.canvases(); cur=(await it.next()).value||null; next=(await it.next()).value||null; };
+  return {
+    /** El fotograma (canvas) que se ve en el segundo ct del video puesto. */
+    async at(ct){
+      if(!it||ct<last-1e-3) await restart(); last=ct;
+      while(next&&next.timestamp<=ct+1e-4){ cur=next; next=(await it.next()).value||null; }
+      return cur?{el:cur.canvas,w,h}:null;
+    },
+    async close(){ if(it&&it.return) await it.return(); }
+  };
 }
 
 /* ---------- warp ---------- */
@@ -454,7 +677,8 @@ function bbox(P,W,H){
   const y0=Math.max(0,Math.floor(Math.min(...ys))),y1=Math.min(H,Math.ceil(Math.max(...ys)));
   return {x0,y0,w:x1-x0,h:y1-y0};
 }
-function warp(img,B,P,src,mode,op){
+/** gain (opcional): luz de la escena, una cuadrícula LN×LN de factores RGB sobre la superficie (ver measureLight). */
+function warp(img,B,P,src,mode,op,gain){
   const Mi=inv3(sq2q(P)), d=img.data, S_=src.d, sw=src.w, sh=src.h;
   for(let y=0;y<B.h;y++){ const Y=B.y0+y+.5;
     for(let x=0;x<B.w;x++){ const X=B.x0+x+.5;
@@ -465,9 +689,10 @@ function warp(img,B,P,src,mode,op){
       const i00=(iy*sw+ix)*4,i10=(iy*sw+ix1)*4,i01=(iy1*sw+ix)*4,i11=(iy1*sw+ix1)*4;
       const w00=(1-fx)*(1-fy)*S_[i00+3], w10=fx*(1-fy)*S_[i10+3], w01=(1-fx)*fy*S_[i01+3], w11=fx*fy*S_[i11+3];
       const A=w00+w10+w01+w11; if(A<=0)continue;
-      const r=(S_[i00]*w00+S_[i10]*w10+S_[i01]*w01+S_[i11]*w11)/A;
-      const gg=(S_[i00+1]*w00+S_[i10+1]*w10+S_[i01+1]*w01+S_[i11+1]*w11)/A;
-      const b=(S_[i00+2]*w00+S_[i10+2]*w10+S_[i01+2]*w01+S_[i11+2]*w11)/A;
+      let r=(S_[i00]*w00+S_[i10]*w10+S_[i01]*w01+S_[i11]*w11)/A;
+      let gg=(S_[i00+1]*w00+S_[i10+1]*w10+S_[i01+1]*w01+S_[i11+1]*w11)/A;
+      let b=(S_[i00+2]*w00+S_[i10+2]*w10+S_[i01+2]*w01+S_[i11+2]*w11)/A;
+      if(gain){ const k=gainAt(gain,u,v); r=Math.min(255,r*k[0]); gg=Math.min(255,gg*k[1]); b=Math.min(255,b*k[2]); }
       const a=A/255*op, o=(y*B.w+x)*4;
       if(mode==='write'){ d[o]=r; d[o+1]=gg; d[o+2]=b; d[o+3]=a*255; }
       else if(mode==='multiply'){ d[o]+= (d[o]*r/255-d[o])*a; d[o+1]+=(d[o+1]*gg/255-d[o+1])*a; d[o+2]+=(d[o+2]*b/255-d[o+2])*a; }
@@ -475,6 +700,150 @@ function warp(img,B,P,src,mode,op){
     }
   }
 }
+
+/* ---------- warp en la GPU (WebGL) ----------
+   Mismo resultado que warp(...,'write'): el contenido deformado sobre fondo transparente, con alfa premultiplicado.
+   Hace falta para el seguimiento, donde la deformación cambia en cada fotograma. Si no hay WebGL, se usa warp(). */
+const GPU=(()=>{
+  let c=null,gl=null,ok=null,uM,uOp,uH,uG,cur=null,maxT=0,texT=null,texG=null;
+  function init(){
+    ok=false;
+    try{
+      c=mk(1,1); c.addEventListener('webglcontextlost',()=>{ok=false;});
+      gl=c.getContext('webgl',{premultipliedAlpha:true,preserveDrawingBuffer:true,antialias:false,alpha:true});
+      if(!gl) return;
+      const hp=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.HIGH_FLOAT); if(!hp||hp.precision<23) return;
+      const sh=(t,src)=>{const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error('shader');return o;};
+      const pr=gl.createProgram();
+      gl.attachShader(pr,sh(gl.VERTEX_SHADER,'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'));
+      gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,'precision highp float;uniform mat3 M;uniform float op,H,useG;uniform sampler2D T,G;'+
+        'void main(){vec3 q=M*vec3(gl_FragCoord.x,H-gl_FragCoord.y,1.);if(q.z<=0.)discard;vec2 uv=q.xy/q.z;'+
+        'if(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.)discard;vec4 c=texture2D(T,uv)*op;'+
+        'if(useG>0.){c.rgb=min(c.rgb*texture2D(G,uv).rgb*4.,vec3(c.a));}gl_FragColor=c;}'));
+      gl.linkProgram(pr); if(!gl.getProgramParameter(pr,gl.LINK_STATUS)) return; gl.useProgram(pr);
+      gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      const la=gl.getAttribLocation(pr,'a'); gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la,2,gl.FLOAT,false,0,0);
+      uM=gl.getUniformLocation(pr,'M'); uOp=gl.getUniformLocation(pr,'op'); uH=gl.getUniformLocation(pr,'H'); uG=gl.getUniformLocation(pr,'useG');
+      gl.uniform1i(gl.getUniformLocation(pr,'T'),0); gl.uniform1i(gl.getUniformLocation(pr,'G'),1);
+      const tex=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t);
+        [[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE],[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR]].forEach(([k,v])=>gl.texParameteri(gl.TEXTURE_2D,k,v)); return t; };
+      gl.activeTexture(gl.TEXTURE1); texG=tex(); gl.activeTexture(gl.TEXTURE0); texT=tex();
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+      maxT=gl.getParameter(gl.MAX_TEXTURE_SIZE); ok=true;
+    }catch(e){ ok=false; }
+  }
+  return {
+    /** Canvas W×H con src deformado sobre las esquinas P (píxeles), o null si la GPU no está disponible. */
+    draw(P,W,H,src,op,gain){
+      if(ok===null) init();
+      if(!ok||gl.isContextLost()||Math.max(src.w,src.h,W,H)>maxT) return null;
+      if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
+      gl.viewport(0,0,W,H);
+      if(src.el){ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src.el); cur=null; } // video: un fotograma nuevo cada vez
+      else if(cur!==src){ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,src.w,src.h,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(src.d.buffer,src.d.byteOffset,src.d.length)); cur=src; }
+      if(gain){ const b=new Uint8Array(LN*LN*3); for(let i=0;i<b.length;i++) b[i]=Math.max(0,Math.min(255,Math.round(gain[i]/4*255)));
+        gl.activeTexture(gl.TEXTURE1); gl.pixelStorei(gl.UNPACK_ALIGNMENT,1); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,LN,LN,0,gl.RGB,gl.UNSIGNED_BYTE,b); gl.activeTexture(gl.TEXTURE0); }
+      gl.uniform1f(uG,gain?1:0);
+      const M=inv3(sq2q(P)), cx=(P[0].x+P[1].x+P[2].x+P[3].x)/4, cy=(P[0].y+P[1].y+P[2].y+P[3].y)/4;
+      const sg=M[6]*cx+M[7]*cy+M[8]<0?-1:1; // así q.z>0 dentro de la superficie y no aparece un reflejo al otro lado del horizonte
+      gl.uniformMatrix3fv(uM,false,[M[0],M[3],M[6],M[1],M[4],M[7],M[2],M[5],M[8]].map(v=>v*sg));
+      gl.uniform1f(uOp,op); gl.uniform1f(uH,H);
+      gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      return c;
+    },
+    forget(){ cur=null; }
+  };
+})();
+
+/* ---------- luz de la escena ----------
+   Se recorre el video a baja resolución (~10 veces por segundo) y se mide el color medio de la superficie en una
+   cuadrícula LN×LN. La "luz normal" de cada zona es su valor típico (mediana) en todo el video; en cada momento,
+   el letrero se multiplica por cuánto más clara, oscura o de otro tono está cada zona. Se suaviza en el tiempo para
+   que el ruido de la cámara o una mano que pasa un instante no lo hagan parpadear. */
+const LN=4, LIGHT={key:'',data:null,busy:null,busyKey:'',timer:0}, GBUF=new Float32Array(LN*LN*3);
+function gainAt(g,u,v){
+  let x=u*LN-.5,y=v*LN-.5; x=x<0?0:x>LN-1?LN-1:x; y=y<0?0:y>LN-1?LN-1:y;
+  const ix=Math.min(LN-2,x|0),iy=Math.min(LN-2,y|0),fx=x-ix,fy=y-iy,o=[];
+  for(let c=0;c<3;c++){ const a=g[(iy*LN+ix)*3+c],b=g[(iy*LN+ix+1)*3+c],d=g[((iy+1)*LN+ix)*3+c],e=g[((iy+1)*LN+ix+1)*3+c];
+    o.push((a+(b-a)*fx)*(1-fy)+(d+(e-d)*fx)*fy); }
+  return o;
+}
+const lightOn=()=>!!S.video&&$('light').checked&&blendMode()!=='multiply';
+const lightKey=()=>{ const V=S.video; return bgVer+'|'+(V&&V.track?'t'+V.trackVer:S.q.map(p=>p.x.toFixed(3)+','+p.y.toFixed(3)).join(';')); };
+/** Factores de luz en el segundo t (o null si la opción está apagada o todavía no se midió). */
+function lightGain(t){
+  if(!lightOn()) return null;
+  if(LIGHT.key!==lightKey()){ scheduleLight(); return null; }
+  const {T,G}=LIGHT.data, n=T.length, N=LN*LN*3; if(!n) return null;
+  let i=0,j=n-1; if(t<=T[0]) j=0; else if(t>=T[n-1]) i=n-1; else { while(j-i>1){ const m=(i+j)>>1; if(T[m]<=t) i=m; else j=m; } }
+  const f=i===j?0:(t-T[i])/(T[j]-T[i]);
+  for(let k=0;k<N;k++) GBUF[k]=G[i*N+k]+(G[j*N+k]-G[i*N+k])*f;
+  return GBUF;
+}
+function scheduleLight(){
+  if(drag||LIGHT.busy||!lightOn()) return;
+  clearTimeout(LIGHT.timer); LIGHT.timer=setTimeout(()=>{ measureLight().then(render,()=>{}); },400);
+}
+function setLNote(t,cls){ const n=$('lightNote'); n.textContent=t; n.style.color=cls==='bad'?'var(--bad)':''; }
+const LIGHT_TIP='El letrero se aclara, se oscurece y cambia de tono igual que la superficie durante el video, por ejemplo si pasa una sombra o se enciende una luz.';
+async function measureLight(){
+  const V=S.video; if(!V) return null;
+  const key=lightKey(); if(LIGHT.key===key&&LIGHT.data) return LIGHT.data;
+  if(LIGHT.busy&&LIGHT.busyKey===key) return LIGHT.busy;
+  LIGHT.busyKey=key;
+  LIGHT.busy=(async()=>{
+    const M=await loadMB(), track=await new M.Input({source:new M.BlobSource(V.file),formats:M.ALL_FORMATS}).getPrimaryVideoTrack();
+    const sc=Math.min(1,256/Math.max(track.displayWidth,track.displayHeight)), w=Math.max(8,Math.round(track.displayWidth*sc)), h=Math.max(8,Math.round(track.displayHeight*sc));
+    const sink=new M.CanvasSink(track,{width:w,height:h,fit:'fill',poolSize:1}), N=LN*LN*3, K=5;
+    const ts=[]; for(let t=0;t<Math.max(V.dur,.01);t+=.1) ts.push(t);
+    const T=[],C=[]; let i=0;
+    for await (const wc of sink.canvasesAtTimestamps(ts)){
+      if(S.video!==V) throw new Error('cancel');
+      const t=wc?wc.timestamp:ts[i]; i++; T.push(t);
+      const q=!wc?null:V.track?quadAt(t):S.q; if(!q){ C.push(null); continue; }
+      const d=wc.canvas.getContext('2d').getImageData(0,0,w,h).data, Hm=sq2q(q.map(p=>({x:p.x*w,y:p.y*h}))), cell=new Float32Array(N).fill(NaN);
+      for(let cy=0;cy<LN;cy++) for(let cx=0;cx<LN;cx++){
+        let r=0,g=0,b=0,c=0;
+        for(let a=0;a<K;a++) for(let e=0;e<K;e++){
+          const p=mapPt(Hm,(cx+(e+.5)/K)/LN,(cy+(a+.5)/K)/LN), x=Math.round(p.x), y=Math.round(p.y);
+          if(x<0||y<0||x>=w||y>=h) continue; const o=(y*w+x)*4; r+=d[o]; g+=d[o+1]; b+=d[o+2]; c++;
+        }
+        if(c>=K) { const o=(cy*LN+cx)*3; cell[o]=r/c; cell[o+1]=g/c; cell[o+2]=b/c; }
+      }
+      C.push(cell);
+      if(i%10===0) setLNote('Midiendo la luz del video… '+Math.round(100*i/ts.length)+' %');
+    }
+    // luz normal: mediana de cada zona y canal
+    const med=a=>{ a=a.filter(Number.isFinite).sort((x,y)=>x-y); return a.length?a[a.length>>1]:NaN; };
+    const ref=new Float32Array(N); for(let k=0;k<N;k++) ref[k]=med(C.map(c=>c?c[k]:NaN));
+    // factor por momento: (actual+8)/(normal+8) para que una superficie muy oscura no dé factores locos
+    const n=T.length, G=new Float32Array(n*N).fill(NaN);
+    for(let t=0;t<n;t++){ const c=C[t]; if(!c) continue;
+      for(let ch=0;ch<3;ch++){
+        const gs=[]; for(let z=0;z<LN*LN;z++){ const k=z*3+ch; if(Number.isFinite(c[k])&&Number.isFinite(ref[k])) gs.push((c[k]+8)/(ref[k]+8)); }
+        if(!gs.length) continue; const m=med(gs);
+        for(let z=0;z<LN*LN;z++){ const k=z*3+ch; const g=Number.isFinite(c[k])&&Number.isFinite(ref[k])?(c[k]+8)/(ref[k]+8):m;
+          G[t*N+k]=Math.max(.25,Math.min(3,m*Math.max(.6,Math.min(1.6,g/m)))); } // las zonas no se alejan demasiado del total
+      }
+    }
+    // huecos (superficie fuera del encuadre): el valor más cercano; y suavizado: mediana de ±2 muestras y luego promedio de ±1
+    for(let k=0;k<N;k++){
+      let last=NaN; for(let t=0;t<n;t++){ const v=G[t*N+k]; if(Number.isFinite(v)) last=v; else if(Number.isFinite(last)) G[t*N+k]=last; }
+      last=NaN; for(let t=n-1;t>=0;t--){ const v=G[t*N+k]; if(Number.isFinite(v)) last=v; else G[t*N+k]=Number.isFinite(last)?last:1; }
+      const a=Array.from({length:n},(_,t)=>G[t*N+k]), m=a.map((_,t)=>med(a.slice(Math.max(0,t-2),t+3)));
+      for(let t=0;t<n;t++){ let s=0,c=0; for(let o=-1;o<=1;o++) if(t+o>=0&&t+o<n){ s+=m[t+o]; c++; } G[t*N+k]=s/c; }
+    }
+    return {T:Float64Array.from(T),G};
+  })();
+  try{ const data=await LIGHT.busy; if(LIGHT.busyKey===key){ LIGHT.data=data; LIGHT.key=key; } setLNote(LIGHT_TIP); return data; }
+  catch(e){ if(e&&e.message!=='cancel') setLNote('No pude medir la luz de este video.','bad'); throw e; }
+  finally{ LIGHT.busy=null; }
+}
+function updLightUI(){
+  const V=S.video; $('lightBox').hidden=!V; $('animBox').hidden=!V; if(!V) return;
+  if(!LIGHT.busy) setLNote($('light').checked&&blendMode()==='multiply'?'Con la fusión "Impreso" el letrero ya toma la luz de la superficie por sí solo.':LIGHT_TIP);
+}
+$('light').addEventListener('change',()=>{ updLightUI(); if(lightOn()) measureLight().then(render,()=>{}); render(); });
 
 /* ---------- fusión ---------- */
 const lum=hex=>{const n=parseInt(hex.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});return .2126*c[0]+.7152*c[1]+.0722*c[2];};
@@ -486,8 +855,74 @@ function blendMode(){
   return S.mode==='text'&&!light?'multiply':'over';
 }
 
+/* ---------- personas por delante del letrero ----------
+   MediaPipe (vendor/mediapipe, solo se descarga al activar la opción) estima en cada fotograma dónde hay una
+   persona (cuerpo, brazos, manos, pelo, ropa) y esa parte se recorta del letrero, que así queda detrás. */
+let SEG=null,segP=null,segKey='',segM=null,segT=0;
+const SEGC=mk(1,1),SEGX=SEGC.getContext('2d',{willReadFrequently:true}),PMASK=mk(1,1),OCCV=mk(1,1);
+function loadSeg(){
+  return segP||(segP=(async()=>{
+    const {FilesetResolver,ImageSegmenter}=await import('./vendor/mediapipe/vision_bundle.mjs');
+    const fs=await FilesetResolver.forVisionTasks(new URL('vendor/mediapipe/wasm',location.href).href);
+    // Se prueban GPU y CPU con una imagen de prueba y se queda el más rápido: sin una GPU real (WebGL por software)
+    // leer la máscara desde la GPU es muy lento.
+    const model=new URL('vendor/mediapipe/selfie_multiclass_256x256.tflite',location.href).href, test=mk(320,320);
+    test.getContext('2d').fillRect(100,60,120,200);
+    let best=null,bestT=Infinity,err=null;
+    for(const delegate of ['GPU','CPU']){
+      try{
+        const s=await ImageSegmenter.createFromOptions(fs,{baseOptions:{modelAssetPath:model,delegate},runningMode:'IMAGE',outputConfidenceMasks:true,outputCategoryMask:false});
+        const run=()=>{ const r=s.segment(test); r.confidenceMasks[0].getAsFloat32Array(); r.close(); };
+        run(); const t0=performance.now(); run(); const t=performance.now()-t0;
+        if(t<bestT){ if(best) best.close(); best=s; bestT=t; } else s.close();
+        if(delegate==='GPU'&&t<40) break; // con una GPU de verdad no hace falta probar la CPU
+      }catch(e){ err=e; }
+    }
+    free(test);
+    if(!best) throw err||new Error('seg');
+    return SEG=best;
+  })().catch(e=>{ segP=null; throw e; }));
+}
+/** Máscara con alfa = 1 donde hay una persona, solo alrededor del letrero (P, en píxeles de un fotograma W×H):
+    así la máscara tiene más detalle donde importa (los dedos sobre el atril). src: el fotograma sin letrero,
+    de tamaño natural sW×sH. Devuelve {c,x,y,w,h}: el canvas y dónde va en el fotograma W×H. */
+function personMask(src,sW,sH,P,W,H,out){
+  const xs=P.map(p=>p.x),ys=P.map(p=>p.y),mx=(Math.max(...xs)-Math.min(...xs))*.25,my=(Math.max(...ys)-Math.min(...ys))*.25;
+  const x0=Math.max(0,Math.min(...xs)-mx),y0=Math.max(0,Math.min(...ys)-my),x1=Math.min(W,Math.max(...xs)+mx),y1=Math.min(H,Math.max(...ys)+my);
+  const bw=Math.max(2,x1-x0),bh=Math.max(2,y1-y0),s=Math.min(512/Math.max(bw,bh),Math.max(sW/W,sH/H)*1);
+  const w=Math.max(2,Math.round(bw*s)),h=Math.max(2,Math.round(bh*s));
+  if(SEGC.width!==w||SEGC.height!==h){ SEGC.width=w; SEGC.height=h; }
+  SEGX.drawImage(src,x0*sW/W,y0*sH/H,bw*sW/W,bh*sH/H,0,0,w,h);
+  const r=SEG.segment(SEGC);
+  try{
+    const m=r.confidenceMasks[0], a=m.getAsFloat32Array(), mw=m.width, mh=m.height; // máscara 0 = fondo
+    if(out.width!==mw||out.height!==mh){ out.width=mw; out.height=mh; }
+    const g=out.getContext('2d'), id=g.createImageData(mw,mh), d=id.data;
+    for(let i=0;i<a.length;i++){ let t=(1-a[i]-.3)/.4; t=t<0?0:t>1?1:t; d[4*i+3]=t*t*(3-2*t)*255; }
+    g.putImageData(id,0,0);
+  }finally{ r.close(); }
+  return {c:out,x:x0,y:y0,w:bw,h:bh};
+}
+/** El letrero L sin la parte tapada por personas (en tmp). */
+function occlude(L,mask,W,H,tmp){
+  if(tmp.width!==W||tmp.height!==H){ tmp.width=W; tmp.height=H; }
+  const g=tmp.getContext('2d');
+  g.globalCompositeOperation='copy'; g.drawImage(L,0,0);
+  g.globalCompositeOperation='destination-out'; g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(mask.c,mask.x,mask.y,mask.w,mask.h);
+  g.globalCompositeOperation='source-over';
+  return tmp;
+}
+$('occ').addEventListener('change',async e=>{
+  const n=$('occNote'), base='El letrero queda detrás de las personas, como si estuviera de verdad en la superficie. Ideal si tus manos pasan sobre el atril.';
+  segKey='';
+  if(!e.target.checked){ n.textContent=base; n.style.color=''; render(); return; }
+  n.textContent='Cargando el detector de personas (16 MB, solo la primera vez)…'; n.style.color='';
+  try{ await loadSeg(); n.textContent=base; render(); }
+  catch(err){ e.target.checked=false; n.textContent='Este navegador no pudo cargar el detector de personas.'; n.style.color='var(--bad)'; }
+});
+
 /* ---------- view ---------- */
-let cssW=0,cssH=0,raf=0,pvKey='',pvSrc=null,layerKey='';
+let cssW=0,cssH=0,raf=0,pvKey='',pvSrc=null,layerKey='',layerCv=null;
 const LAYER=mk(1,1), LCTX=LAYER.getContext('2d',{willReadFrequently:true});
 function layout(){
   const maxW=stagebox.clientWidth-20;
@@ -498,27 +933,36 @@ function layout(){
   stage.style.width=cssW+'px'; stage.style.height=cssH+'px';
   const dpr=Math.min(window.devicePixelRatio||1,2);
   view.width=Math.round(cssW*dpr); view.height=Math.round(cssH*dpr);
-  pvKey=''; layerKey=''; render();
+  pvKey=''; layerKey=''; render(); drawTrk();
 }
 function render(){ if(!raf) raf=requestAnimationFrame(draw); }
 function contentKey(P){
+  if(S.mode==='video') return 'vid'+(S.cvid&&S.cvid.ready?S.cvid.url:0);
   return S.mode==='image'?'img'+(S.imgSrc?S.imgSrc.w+'x'+S.imgSrc.h:0):[Math.round(quadInfo(P).wide/8),Math.round(quadInfo(P).aspect*50),$('txt').value,$('sub').value,$('subsize').value,$('subfont').value,$('subcaps').checked,$('font').value,$('size').value,$('vpos').value,S.color,S.align,$('shadow').checked].join('|');
 }
-/** Dibuja el contenido deformado en LAYER (transparente, del tamaño de la vista). Solo cuando algo cambió. */
-function updateLayer(P,W,H){
-  const key=contentKey(P);
-  if(key!==pvKey){ pvSrc=getSource(P,1600); pvKey=key; layerKey=''; }
-  const lk=key+'|'+P.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(';')+'|'+W+'x'+H+'|'+$('op').value;
-  if(lk===layerKey) return;
-  if(LAYER.width!==W||LAYER.height!==H){ LAYER.width=W; LAYER.height=H; } else LCTX.clearRect(0,0,W,H);
-  const B=bbox(P,W,H);
-  if(B.w>0&&B.h>0){ const img=LCTX.createImageData(B.w,B.h); warp(img,B,P,pvSrc,'write',$('op').value/100); LCTX.putImageData(img,B.x0,B.y0); }
-  layerKey=lk;
+/** Devuelve un canvas (transparente, del tamaño de la vista) con el contenido deformado. Solo lo recalcula cuando algo cambió.
+    SP: esquinas que definen la forma del contenido (con seguimiento, las del momento marcado, para que el texto no cambie). */
+function updateLayer(P,W,H,SP,gain,p=1){
+  const key=contentKey(SP)+(p<1?'|a'+$('anim').value+p.toFixed(3):'');
+  if(key!==pvKey){ pvSrc=getSource(SP,1600,p); pvKey=key; layerKey=''; }
+  const lk=key+'|'+P.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(';')+'|'+W+'x'+H+'|'+$('op').value+'|'+(gain?Array.from(gain,v=>v.toFixed(2)).join(','):'')+(pvSrc.el?'|'+pvSrc.el.currentTime:'');
+  if(lk===layerKey&&layerCv) return layerCv;
+  layerCv=GPU.draw(P,W,H,pvSrc,$('op').value/100,gain);
+  if(!layerCv){
+    if(LAYER.width!==W||LAYER.height!==H){ LAYER.width=W; LAYER.height=H; } else LCTX.clearRect(0,0,W,H);
+    const B=bbox(P,W,H);
+    if(B.w>0&&B.h>0){ const img=LCTX.createImageData(B.w,B.h); warp(img,B,P,pixelsOf(pvSrc),'write',$('op').value/100,gain); LCTX.putImageData(img,B.x0,B.y0); }
+    layerCv=LAYER;
+  }
+  layerKey=lk; return layerCv;
 }
 /** Opacidad del letrero en el segundo t según la línea de tiempo (1 si no hay video). */
 function timeAlpha(t){
   if(!S.video) return 1;
-  const t0=S.video.t0, t1=S.video.t1, f=$('fade').checked?.4:0;
+  // Si el letrero empieza al inicio o termina al final del video, ahí no hay transición: se ve desde el primer
+  // fotograma hasta el último (la duración del navegador puede quedar un poco antes del último fotograma).
+  const V=S.video, E=.05, atStart=V.t0<=E, atEnd=V.t1>=V.dur-E;
+  const t0=atStart?-Infinity:V.t0, t1=atEnd?Infinity:V.t1, f=$('fade').checked?.4:0;
   if(t<t0-1e-3||t>t1+1e-3) return 0;
   if(!f) return 1;
   return Math.max(0,Math.min(1,(t-t0)/f,(t1-t)/f));
@@ -529,20 +973,33 @@ function draw(){
   vctx.globalCompositeOperation='source-over'; vctx.globalAlpha=1;
   vctx.clearRect(0,0,W,H);
   try{ vctx.drawImage(S.bg,0,0,W,H); }catch(e){}
-  const P=S.q.map(p=>({x:p.x*W,y:p.y*H}));
-  const playing=S.video&&!S.video.el.paused;
+  const V=S.video, playing=V&&!V.el.paused;
+  syncContentVideo();
+  let lost=false;
+  if(V&&V.track&&!drag){ const q=quadAt(curT()); if(q) S.q=q.map(p=>({...p})); else lost=true; }
+  $('ltag').hidden=!lost||playing;
+  const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), SP=shapeQ().map(p=>({x:p.x*W,y:p.y*H}));
   try{
-    updateLayer(P,W,H);
     let a=1;
-    if(S.video){ a=timeAlpha(S.video.el.currentTime); if(!playing&&a<.3) a=.3; }
-    if(a>0){ vctx.globalAlpha=a; vctx.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; vctx.drawImage(LAYER,0,0); }
+    if(V){ a=timeAlpha(V.el.currentTime); if(!playing&&a<.3) a=.3; }
+    if(lost) a=0;
+    if(a>0){ let L=updateLayer(P,W,H,SP,V?lightGain(curT()):null,playing?animP(curT()):1); // en pausa, el texto completo para editarlo
+      if($('occ').checked&&SEG){
+        // al reproducir, como mucho ~15 veces por segundo para no trabar la reproducción en celulares lentos
+        const k=bgVer+'|'+(V?curT():0)+'|'+W+'x'+H+'|'+P.map(p=>p.x.toFixed(0)+','+p.y.toFixed(0)).join(';'), now=performance.now();
+        if(k!==segKey&&!drag&&(!playing||now-segT>66||!segM)){ segM=personMask(S.bg,S.bgW,S.bgH,P,W,H,PMASK); segKey=k; segT=now; }
+        if(segM) L=occlude(L,segM,W,H,OCCV);
+      }
+      vctx.globalAlpha=a; vctx.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; vctx.drawImage(L,0,0); }
     vctx.globalCompositeOperation='source-over'; vctx.globalAlpha=1;
     if(drawErr){ drawErr=false; setMsg(''); }
   }catch(e){
     vctx.globalCompositeOperation='source-over'; vctx.globalAlpha=1;
     pvKey=''; layerKey=''; if(!drawErr){ drawErr=true; setMsg('El navegador se quedó sin memoria para la vista previa. Recarga la página si no vuelve a aparecer.','bad'); }
   }
-  if($('outline').checked&&!playing){
+  if(V&&+$('vfmt').value){ const r=cropRect(W,H); vctx.fillStyle='rgba(0,0,0,.55)';
+    vctx.fillRect(0,0,W,r.y); vctx.fillRect(0,r.y+r.h,W,H-r.y-r.h); vctx.fillRect(0,r.y,r.x,r.h); vctx.fillRect(r.x+r.w,r.y,W-r.x-r.w,r.h); }
+  if($('outline').checked&&!playing&&!lost){
     vctx.save(); vctx.strokeStyle='rgba(255,169,77,.95)'; vctx.setLineDash([8,6]); vctx.lineWidth=Math.max(1.5,W/450);
     poly(vctx,P); vctx.stroke(); vctx.restore();
   }
@@ -552,8 +1009,31 @@ function draw(){
   });
   if(drag&&drag.i!=='m') drawLoupe();
   if(S.video) updateTimeline();
-  if(playing) render();
+  updGuide();
+  if(playing||(!V&&S.mode==='video'&&S.cvid&&S.cvid.ready)) render();
 }
+
+/* ---------- guía paso a paso ---------- */
+let gStep=1, gKey='';
+function updGuide(){
+  const V=S.video, P=S.prog, done=[!S.isSample, P.moved||!!(V&&V.track), P.content, P.saved];
+  let n=done.indexOf(false)+1||4, t;
+  if(V&&V.tracking){ n=2; t='Analizando el video para seguir la superficie. El avance está en el paso 2.'; }
+  else if(n===1) t='Sube una foto o un video donde se vea la superficie: un cuadro, un letrero, una pantalla. Mientras, prueba con este ejemplo.';
+  else if(n===2) t=V?'Pausa en un momento donde se vea bien la superficie y arrastra los 4 puntos naranjas a sus esquinas.':'Arrastra los 4 puntos naranjas a las esquinas de la superficie.';
+  else if(n===3) t=V&&!V.track?'Escribe tu texto o sube tu imagen. Si la cámara se mueve, pulsa antes "Seguir la superficie" en el paso 2.':'Escribe tu texto o sube tu imagen: toma solo el ángulo de la superficie.';
+  else if(!P.saved) t=V?'Dale play para revisarlo y descarga el video.':'Todo listo: descarga el resultado.';
+  else t='¡Listo! Puedes seguir ajustando y volver a descargar.';
+  const key=n+t+done.join();
+  if(key===gKey) return; gKey=key; gStep=n;
+  $('gtext').textContent=t; $('gnum').textContent=n===4&&P.saved?'✓':n; $('gof').textContent='Paso '+n+' de 4';
+  $('ggo').hidden=n===2&&!V; // el paso 2 se hace sobre la imagen
+  document.querySelectorAll('#steps li').forEach((li,i)=>{ li.classList.toggle('done',done[i]); li.classList.toggle('now',i+1===n); li.querySelector('b').textContent=done[i]?'✓':i+1; });
+  for(let i=1;i<=4;i++){ $('st'+i).classList.toggle('done',done[i-1]); $('st'+i).classList.toggle('now',i===n); }
+}
+const goStep=n=>$('st'+n).scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+$('ggo').onclick=()=>goStep(gStep);
+document.querySelectorAll('#steps li').forEach(li=>li.onclick=()=>goStep(+li.dataset.s));
 
 /* ---------- handles ---------- */
 let drag=null;
@@ -561,23 +1041,24 @@ const cl=v=>Math.min(1.5,Math.max(-.5,v));
 handles.forEach(h=>{
   h.addEventListener('pointerdown',e=>{
     e.preventDefault(); h.setPointerCapture(e.pointerId);
-    drag={i:h.dataset.i,sx:e.clientX,sy:e.clientY,start:S.q.map(p=>({...p}))};
+    drag={i:h.dataset.i,sx:e.clientX,sy:e.clientY,start:S.q.map(p=>({...p}))}; if(PICK.on) setPick(false);
     if(drag.i!=='m'){loupe.hidden=false; render();}
   });
   h.addEventListener('pointermove',e=>{
     if(!drag)return;
     const dx=(e.clientX-drag.sx)/cssW, dy=(e.clientY-drag.sy)/cssH;
+    S.prog.moved=true;
     if(drag.i==='m') S.q=drag.start.map(p=>({x:cl(p.x+dx),y:cl(p.y+dy)}));
     else{ const s=drag.start[+drag.i]; S.q[+drag.i]={x:cl(s.x+dx),y:cl(s.y+dy)}; }
     render();
   });
-  const end=()=>{drag=null;loupe.hidden=true;};
+  const end=()=>{ if(drag) setKey(); drag=null; loupe.hidden=true; render(); };
   h.addEventListener('pointerup',end); h.addEventListener('pointercancel',end);
   h.addEventListener('keydown',e=>{
     const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key]; if(!k)return;
-    e.preventDefault(); const n=e.shiftKey?10:1, mv=p=>({x:cl(p.x+k[0]*n/cssW),y:cl(p.y+k[1]*n/cssH)});
+    e.preventDefault(); S.prog.moved=true; const n=e.shiftKey?10:1, mv=p=>({x:cl(p.x+k[0]*n/cssW),y:cl(p.y+k[1]*n/cssH)});
     if(h.dataset.i==='m') S.q=S.q.map(mv); else S.q[+h.dataset.i]=mv(S.q[+h.dataset.i]);
-    render();
+    setKey(); render();
   });
 });
 function drawLoupe(){
@@ -589,25 +1070,62 @@ function drawLoupe(){
   lctx.beginPath(); lctx.moveTo(120,96); lctx.lineTo(120,144); lctx.moveTo(96,120); lctx.lineTo(144,120); lctx.stroke();
 }
 
+/* ---------- detectar las esquinas tocando la superficie ----------
+   quad.js busca las líneas rectas largas del fotograma y arma los cuadriláteros que contienen el punto tocado,
+   puntuados por cuánto borde real hay en sus lados. Tocar de nuevo en el mismo lugar prueba el siguiente. */
+let QD=null; const PICK={on:false,x:0,y:0,cands:[],i:0};
+const loadQD=async()=>QD||(QD=await import('./quad.js'));
+function setPick(on){
+  PICK.on=on; PICK.cands=[]; stage.classList.toggle('picking',on);
+  $('detect').setAttribute('aria-pressed',on); $('detect').textContent=on?'Listo':'Detectar tocando';
+  $('ptag').hidden=!on; if(on) $('ptag').textContent='Toca dentro de la superficie: un cuadro, una pantalla, un atril…';
+}
+function applyCand(){
+  const c=PICK.cands[PICK.i]; S.q=c.q.map(p=>({x:p[0],y:p[1]})); S.prog.moved=true; setKey();
+  $('ptag').textContent=PICK.cands.length>1?`¿No es esa? Toca otra vez en el mismo lugar (${PICK.i+1} de ${PICK.cands.length}). "Listo" para terminar.`:'Listo. Ajusta los puntos si hace falta.';
+  render();
+}
+async function pickAt(nx,ny){
+  if(PICK.cands.length&&Math.hypot(nx-PICK.x,ny-PICK.y)<.03){ PICK.i=(PICK.i+1)%PICK.cands.length; applyCand(); return; }
+  PICK.x=nx; PICK.y=ny; $('ptag').textContent='Buscando los bordes…';
+  try{
+    const Q=await loadQD(), s=Math.min(1,640/Math.max(S.bgW,S.bgH)), w=Math.max(16,Math.round(S.bgW*s)), h=Math.max(16,Math.round(S.bgH*s));
+    SCR.width=w; SCR.height=h; SCRX.drawImage(S.bg,0,0,w,h);
+    const d=SCRX.getImageData(0,0,w,h).data, g=new Uint8Array(w*h); SCR.width=1; SCR.height=1;
+    for(let i=0,j=0;i<g.length;i++,j+=4) g[i]=(d[j]*77+d[j+1]*150+d[j+2]*29)>>8;
+    const R=Q.findQuads(g,w,h,nx*w-.5,ny*h-.5);
+    PICK.cands=R.map(c=>({q:c.q.map(p=>[(p[0]+.5)/w,(p[1]+.5)/h])})); PICK.i=0;
+    if(!PICK.cands.length){ $('ptag').textContent='No encontré bordes claros aquí. Prueba tocando en otro lugar o ajusta los puntos a mano.'; return; }
+    applyCand();
+  }catch(e){ $('ptag').textContent='No pude detectar las esquinas en este navegador.'; }
+}
+$('detect').onclick=()=>{ if(S.video&&!S.video.el.paused) S.video.el.pause(); setPick(!PICK.on); };
+stage.addEventListener('pointerdown',e=>{
+  if(!PICK.on||e.target.closest('.h')) return;
+  const r=stage.getBoundingClientRect(); pickAt((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);
+});
+
 /* ---------- background loading ---------- */
 function defaultQ(){return [{x:.3,y:.3},{x:.7,y:.3},{x:.7,y:.62},{x:.3,y:.62}];}
 function useSample(){
+  if(typeof PICK!=='undefined'&&PICK.on) setPick(false);
   dropVideo();
-  S.bg=makeSample(); S.bgW=1600; S.bgH=1000; S.isSample=true; S.q=S.sampleQ.map(p=>({...p}));
+  S.bg=makeSample(); S.bgW=1600; bgVer++; S.bgH=1000; S.isSample=true; S.q=S.sampleQ.map(p=>({...p}));
   $('tag').hidden=false; $('result').hidden=true; layout();
 }
 function loadBgFile(f){
-  if(f&&(/^video\//.test(f.type)||/\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name||''))){ loadVideo(f); return; }
+  if(PICK.on) setPick(false);
+  if(f&&(/^video\//.test(f.type)||/\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name||'')))return loadVideo(f);
   if(!f||!/^image\//.test(f.type)){ setMsg('Ese archivo no es una foto ni un video. Prueba con JPG, PNG o MP4.','bad'); return; }
   const url=URL.createObjectURL(f), im=new Image();
-  im.onload=()=>{ dropVideo(); S.bg=im; S.bgW=im.naturalWidth; S.bgH=im.naturalHeight; S.isSample=false; S.q=defaultQ();
-    $('tag').hidden=true; $('result').hidden=true; setMsg('Foto cargada. Lleva los 4 puntos a las esquinas de la superficie.','ok'); layout(); };
+  im.onload=()=>{ dropVideo(); S.prog.moved=S.prog.saved=false; S.bg=im; bgVer++; S.bgW=im.naturalWidth; S.bgH=im.naturalHeight; S.isSample=false; S.q=defaultQ();
+    $('tag').hidden=true; $('result').hidden=true; setMsg(''); layout(); };
   im.onerror=()=>setMsg('No pude abrir esa imagen. Prueba con JPG o PNG.','bad');
   im.src=url;
 }
 $('bgfile').addEventListener('change',e=>{loadBgFile(e.target.files[0]); e.target.value='';});
 $('sample').onclick=()=>{useSample(); setMsg('');};
-$('resetq').onclick=()=>{S.q=S.isSample?S.sampleQ.map(p=>({...p})):defaultQ(); render();};
+$('resetq').onclick=()=>{ if(S.video) clearTrack(); S.q=S.isSample?S.sampleQ.map(p=>({...p})):defaultQ(); render(); };
 let dragDepth=0;
 stagebox.addEventListener('dragenter',e=>{e.preventDefault();dragDepth++;$('drop').hidden=false;});
 stagebox.addEventListener('dragover',e=>e.preventDefault());
@@ -619,6 +1137,115 @@ document.addEventListener('paste',e=>{
 });
 
 
+/* ---------- grabar desde la página ----------
+   La cámara que ofrece el selector de archivos (en iPhone, "Tomar video") graba en baja calidad y comprime el video.
+   Aquí abrimos la cámara directamente y grabamos nosotros: 1080p o 4K, con bitrate alto y el micrófono sin
+   cancelación de eco ni supresión de ruido (que arruinan la música). */
+const canRec=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+const REC={stream:null,rec:null,chunks:[],facing:'environment',t0:0,timer:0,lock:null,cancel:false};
+function recMime(){
+  for(const m of ['video/mp4;codecs=avc1.640028,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'])
+    if(MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+function recStopStream(){ if(REC.stream) REC.stream.getTracks().forEach(t=>t.stop()); REC.stream=null; $('recPrev').srcObject=null; }
+function recUI(){
+  const on=!!REC.rec;
+  $('recGo').classList.toggle('on',on); $('recGo').setAttribute('aria-label',on?'Terminar de grabar':'Empezar a grabar');
+  $('recFlip').disabled=on; $('recRes').disabled=on; $('recFps').disabled=on; $('recClose').textContent=on?'Descartar':'Cancelar'; $('recTime').hidden=!on;
+}
+async function recCamera(){
+  recStopStream(); $('recGo').disabled=true; $('recErr').hidden=true; $('recInfo').textContent='Preparando la cámara…';
+  const big=$('recRes').value==='2160', W=big?3840:1920, H=big?2160:1080;
+  const F=+$('recFps').value, video={facingMode:{ideal:REC.facing},width:{ideal:W},height:{ideal:H},frameRate:{ideal:F,max:F}};
+  const music={echoCancellation:false,noiseSuppression:false,autoGainControl:false};
+  let err=null;
+  for(const c of [{video,audio:music},{video,audio:true},{video,audio:false}]){
+    try{ REC.stream=await navigator.mediaDevices.getUserMedia(c); break; }catch(e){ err=e; if(e&&e.name==='NotAllowedError'&&c.audio===false) break; }
+  }
+  if($('rec').hidden){ recStopStream(); return; }
+  if(!REC.stream){
+    $('recErr').hidden=false; $('recInfo').textContent='Sin cámara';
+    $('recErr').textContent=err&&err.name==='NotAllowedError'
+      ?'Oblicua no tiene permiso para usar la cámara. Actívalo en los ajustes del navegador (en iPhone: Ajustes → Apps → Safari → Cámara y Micrófono) y vuelve a intentarlo.'
+      :'No pude abrir la cámara. Puedes grabar con la app de cámara de tu celular y luego subir el video.';
+    return;
+  }
+  const v=$('recPrev'); v.srcObject=REC.stream; v.style.transform=REC.facing==='user'?'scaleX(-1)':'';
+  try{ await v.play(); }catch(e){}
+  const vt=REC.stream.getVideoTracks()[0], st=vt.getSettings(), sh=Math.min(st.width||v.videoWidth||0,st.height||v.videoHeight||0);
+  // ¿Cuántos fps permite esta cámara? Si no llega a 60, se ofrece solo 30.
+  let maxF=0; try{ maxF=(vt.getCapabilities&&vt.getCapabilities().frameRate||{}).max||0; }catch(e){}
+  const o60=$('recFps').options[0], no60=(maxF&&maxF<50)||(F>=60&&st.frameRate&&st.frameRate<50);
+  o60.disabled=!!no60; o60.textContent=no60?'60 fps (no disponible)':'60 fps';
+  if(no60&&F>=60) $('recFps').value='30';
+  $('recInfo').textContent=(sh>=2000?'4K':sh?sh+'p':'Cámara lista')+(st.frameRate?' · '+Math.round(st.frameRate)+' fps':'')+(REC.stream.getAudioTracks().length?'':' · sin sonido');
+  $('recGo').disabled=false;
+}
+async function recOpen(){
+  $('rec').hidden=false; document.body.style.overflow='hidden';
+  await recCamera();
+}
+function recClose(){
+  if(REC.rec){ REC.cancel=true; REC.rec.stop(); return; }
+  recStopStream(); $('rec').hidden=true; document.body.style.overflow='';
+}
+async function recToggle(){
+  if(REC.rec){ REC.rec.stop(); return; }
+  if(!REC.stream) return;
+  const st=REC.stream.getVideoTracks()[0].getSettings(), px=(st.width||1920)*(st.height||1080);
+  const fr=st.frameRate||+$('recFps').value, vbps=Math.round(Math.min(50e6,Math.max(12e6,16e6*px/(1920*1080)*(fr>=50?1.5:1)))), mime=recMime();
+  REC.chunks=[]; REC.cancel=false;
+  try{ REC.rec=new MediaRecorder(REC.stream,{...(mime?{mimeType:mime}:{}),videoBitsPerSecond:vbps,audioBitsPerSecond:192000}); }
+  catch(e){ try{ REC.rec=new MediaRecorder(REC.stream); }catch(e2){ $('recErr').hidden=false; $('recErr').textContent='Este navegador no puede grabar video.'; return; } }
+  REC.rec.ondataavailable=e=>{ if(e.data&&e.data.size) REC.chunks.push(e.data); };
+  REC.rec.onstop=recDone;
+  REC.rec.start(); REC.t0=performance.now(); REC.res=$('recRes').value; REC.fps=Math.round(fr);
+  REC.timer=setInterval(()=>{ $('recTime').textContent=fmtT((performance.now()-REC.t0)/1000).replace(/\.\d$/,''); },250);
+  $('recTime').textContent='0:00';
+  try{ REC.lock=navigator.wakeLock?await navigator.wakeLock.request('screen'):null; }catch(e){}
+  recUI();
+}
+function recDone(){
+  const rec=REC.rec, type=((rec&&rec.mimeType)||recMime()||'video/mp4').split(';')[0], cancel=REC.cancel;
+  clearInterval(REC.timer); REC.rec=null; try{ REC.lock&&REC.lock.release(); }catch(e){} REC.lock=null;
+  recUI(); recClose();
+  const blob=new Blob(REC.chunks,{type}); REC.chunks=[];
+  if(cancel||!blob.size) return;
+  const f=new File([blob],'oblicua-grabacion.'+(/mp4/.test(type)?'mp4':'webm'),{type});
+  const res=REC.res, want=REC.fps; Promise.resolve(loadBgFile(f)).then(()=>recCheck(f,res,want));
+}
+/** Si el celular no alcanzó a grabar a esa calidad, el archivo queda con pocos fotogramas: avisamos. */
+async function recCheck(f,res,want){
+  try{
+    const M=await loadMB(), t=await new M.Input({source:new M.BlobSource(f),formats:M.ALL_FORMATS}).getPrimaryVideoTrack();
+    const fps=(await t.computePacketStats()).averagePacketRate;
+    if(fps&&want&&fps<want*.8)
+      setTMsg('La grabación quedó a '+Math.round(fps)+' fotogramas por segundo en vez de '+want+': tu celular no alcanzó a grabar a esa calidad desde el navegador. '
+        +(want>=50?'Prueba con 30 fps':res==='2160'?'Prueba en 1080p':'Prueba')+(want>=50||res==='2160'?', o graba':' grabar')+' con la app Cámara y '+(want>=50||res==='2160'?'súbelo':'subirlo')+' desde la Fototeca.','bad');
+  }catch(e){}
+}
+if(canRec){
+  $('recOpen').hidden=false;
+  $('recOpen').onclick=recOpen; $('recClose').onclick=recClose; $('recGo').onclick=recToggle;
+  $('recFlip').onclick=()=>{ REC.facing=REC.facing==='environment'?'user':'environment'; recCamera(); };
+  $('recRes').onchange=recCamera; $('recFps').onchange=recCamera;
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('rec').hidden) recClose(); });
+}
+
+/* ---------- iPhone: la cámara del navegador graba en baja calidad ---------- */
+// Al grabar desde la página, iOS no usa los ajustes de la app Cámara (4K, etc.) y además comprime el video.
+// La página no puede pedir más calidad, así que le explicamos a la persona cómo traer el video original.
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const IOS_TIP='En iPhone, para grabar en buena calidad usa el botón "Grabar video" (o graba con la app Cámara y súbelo desde la Fototeca). La cámara que aparece en "Subir foto o video" graba en baja calidad.';
+function iosHint(short){
+  const n=$('iosNote'); if(!isIOS){ n.hidden=true; return; }
+  n.hidden=false; n.style.color='';
+  n.textContent=IOS_TIP;
+  if(short&&short<1080){ n.textContent='Este video llegó en baja resolución ('+short+'p). '+IOS_TIP; n.style.color='var(--bad)'; }
+}
+iosHint(0);
+
 /* ---------- video ---------- */
 const fmtT=t=>{t=Math.max(0,t||0);const m=Math.floor(t/60),s=t-m*60;return m+':'+(s<10?'0':'')+(Math.floor(s*10)/10).toFixed(1);};
 let MB=null;
@@ -626,7 +1253,9 @@ const loadMB=async()=>MB||(MB=await import('./vendor/mediabunny.min.js'));
 function dropVideo(){
   if(S.video){ const V=S.video; V.dead=true; try{V.el.pause();V.el.removeAttribute('src');V.el.load();V.el.remove();URL.revokeObjectURL(V.url);}catch(e){} }
   S.video=null; $('editor').hidden=true; $('vidExp').hidden=true; stage.classList.remove('playing');
+  $('ltag').hidden=true; $('tmsg').textContent=''; updTrackUI(); drawTrk(); LIGHT.key=''; LIGHT.data=null; updLightUI();
   $('expFull').textContent='Foto completa (JPG)'; $('expFull').classList.add('primary');
+  $('imgExp').classList.add('flat'); $('imgExp').open=true;
 }
 function once(el,ok,bad){return new Promise((res,rej)=>{const a=()=>{c();res();},b=()=>{c();rej(new Error(bad));},c=()=>{el.removeEventListener(ok,a);el.removeEventListener('error',b);};el.addEventListener(ok,a);el.addEventListener('error',b);});}
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
@@ -644,20 +1273,24 @@ async function loadVideo(f){
     let dur=el.duration;
     if(!isFinite(dur)){ try{ const M=await loadMB(); const inp=new M.Input({source:new M.BlobSource(f),formats:M.ALL_FORMATS}); dur=await inp.computeDuration(); }catch(e){ dur=0; } }
     try{ await withTimeout(el.play(),2500); }catch(e){} try{ el.pause(); }catch(e){}
-    dropVideo();
-    const V={file:f,url,el,dur:dur||0,t0:0,t1:dur||0};
+    dropVideo(); S.prog.moved=S.prog.saved=false;
+    const V={file:f,url,el,dur:dur||0,t0:0,t1:dur||0,track:null,keys:[],shape:null,stale:false,tracking:null,mt:null};
     S.video=V;
-    S.bgW=el.videoWidth; S.bgH=el.videoHeight; S.isSample=false; S.q=defaultQ(); S.bg=el;
+    // Momento exacto del fotograma en pantalla mientras se reproduce, para que el letrero no vaya un fotograma tarde.
+    if(el.requestVideoFrameCallback){ const vf=(now,m)=>{ if(S.video!==V) return; V.mt=m.mediaTime; if(V.track) render(); el.requestVideoFrameCallback(vf); }; el.requestVideoFrameCallback(vf); }
+    S.bgW=el.videoWidth; S.bgH=el.videoHeight; S.isSample=false; S.q=defaultQ(); S.bg=el; bgVer++;
+    iosHint(Math.min(S.bgW,S.bgH));
     el.addEventListener('play',()=>{ stage.classList.add('playing'); setPlayIcon(true); render(); });
     el.addEventListener('pause',()=>{ stage.classList.remove('playing'); setPlayIcon(false); render(); });
     el.addEventListener('ended',()=>{ stage.classList.remove('playing'); setPlayIcon(false); render(); });
     el.addEventListener('seeked',render);
     syncTimeInputs();
-    $('vq').value=Math.min(S.bgW,S.bgH)>1080?'1080':'0';
+    $('vq').value='0';
     $('editor').hidden=false; $('vidExp').hidden=false; $('expFull').textContent='Este fotograma (JPG)'; $('expFull').classList.remove('primary');
+    $('imgExp').classList.remove('flat'); $('imgExp').open=false;
     $('tag').hidden=true; $('result').hidden=true;
-    layout();
-    setMsg('Video cargado. Ubica los 4 puntos, dale play para verlo y ajusta en la barra naranja cuándo aparece el letrero.','ok');
+    updTrackUI(); updLightUI(); layout();
+    setMsg('');
     await seekTo(Math.min(.05,V.dur/2));
     buildFilm(V);
   }catch(e){
@@ -703,7 +1336,7 @@ function updateTimeline(){
   clip.style.left=pct(V.t0); clip.style.width='calc('+pct(V.t1-V.t0)+')';
   clip.classList.toggle('ghost',timeAlpha(t)===0);
   $('tc').textContent=fmtT(t)+' / '+fmtT(V.dur);
-  $('clbl').textContent=S.mode==='image'?'Imagen':(($('txt').value.split('\n')[0]||'').trim()||'Letrero');
+  $('clbl').textContent=S.mode==='image'?'Imagen':S.mode==='video'?'Video':(($('txt').value.split('\n')[0]||'').trim()||'Letrero');
 }
 let tdrag=null;
 const tAt=x=>{ const r=tl.getBoundingClientRect(); return Math.max(0,Math.min(1,(x-r.left)/r.width))*(S.video?S.video.dur:0); };
@@ -752,37 +1385,170 @@ async function buildFilm(V){
     for await (const w of sink.canvasesAtTimestamps(ts)){ if(V.dead) return; if(w) g.drawImage(w.canvas,i*tw,0,tw,H); i++; }
   }catch(e){}
 }
+/* ---------- seguimiento de la superficie (cámara en movimiento) ---------- */
+let TRK=null;
+const loadTRK=async()=>TRK||(TRK=await import('./tracker.js'));
+const curT=()=>{ const V=S.video; if(!V) return 0; return !V.el.paused&&V.mt!=null?V.mt:V.el.currentTime; };
+/** Índice del fotograma que se ve en el segundo t (el último que empieza antes de t). */
+function trkIdx(T,t){ let lo=0,hi=T.length-1; if(hi<0) return -1; while(lo<hi){ const m=(lo+hi+1)>>1; if(T[m]<=t+1e-4) lo=m; else hi=m-1; } return lo; }
+const sameFrame=(a,b)=>{ const V=S.video; return V&&V.track?trkIdx(V.track.t,a)===trkIdx(V.track.t,b):Math.abs(a-b)<1e-3; };
+/** Esquinas de la superficie en el segundo t, o null si ahí no se encontró. Las correcciones a mano mandan. */
+function quadAt(t){
+  const V=S.video, tr=V&&V.track; if(!tr) return null;
+  const k=V.keys.find(k=>sameFrame(k.t,t)); if(k) return k.q;
+  const i=trkIdx(tr.t,t); if(i<0||Number.isNaN(tr.q[i*8])) return null;
+  const q=[]; for(let c=0;c<4;c++) q.push({x:tr.q[i*8+2*c],y:tr.q[i*8+2*c+1]}); return q;
+}
+/** Esquinas que definen la forma del contenido: con seguimiento, las del primer momento marcado. */
+const shapeQ=()=>S.video&&S.video.track&&S.video.shape?S.video.shape:S.q;
+/** Tras mover los puntos con un seguimiento hecho: ese fotograma queda como corrección. */
+function setKey(){
+  const V=S.video; if(!V||!V.track) return;
+  const t=V.el.currentTime;
+  const old=V.keys.find(k=>sameFrame(k.t,t)), q=S.q.map(p=>({...p}));
+  V.keys=V.keys.filter(k=>k!==old); V.keys.push({t,q,main:!!(old&&old.main)}); V.keys.sort((a,b)=>a.t-b.t);
+  if(old&&old.main) V.shape=q;
+  V.stale=true; V.kv=(V.kv||0)+1; updTrackUI(); drawTrk();
+}
+function clearTrack(){ const V=S.video; if(!V) return; if(V.tracking) V.tracking.cancel=true; V.track=null; V.keys=[]; V.shape=null; V.stale=false; $('tmsg').textContent=''; updTrackUI(); drawTrk(); render(); }
+function setTMsg(t,cls){ const m=$('tmsg'); m.textContent=t; m.className='msg'+(cls?' '+cls:''); }
+function updTrackUI(){
+  const V=S.video; $('trackSec').hidden=!V; if(!V) return;
+  const busy=!!V.tracking, has=!!V.track, n=V.keys.length-1;
+  $('trackBtn').hidden=busy||(has&&!V.stale); $('trackCancel').hidden=!busy; $('tprog').hidden=!busy; $('trackOff').hidden=busy||!has;
+  $('trackBtn').textContent=has?'Actualizar seguimiento':'Seguir la superficie';
+  $('tnote').textContent=!has?'Oblicua puede mover los puntos sola para que el letrero siga a la superficie en todo el video, aunque salga del encuadre y vuelva. Primero coloca los 4 puntos en un momento donde se vea bien y luego pulsa el botón.'
+    :V.stale?(n>0?'Corregiste '+(n>1?n+' momentos':'un momento'):'Cambiaste una opción')+'. Pulsa "Actualizar seguimiento" para aplicarlo a todo el video.'
+    :'El letrero sigue a la superficie. Si en algún momento se desvía, pausa ahí, arrastra los puntos a su sitio y actualiza.';
+  $('vnote').textContent='Mantiene el audio original.'+(has?' El letrero sigue a la superficie mientras la cámara se mueve.':' Si la cámara se mueve, usa antes "Seguir la superficie" (paso 2).');
+  $('expVid').disabled=busy;
+}
+/** Franja bajo la película: en verde dónde se encontró la superficie; las marcas son los momentos marcados a mano. */
+function drawTrk(){
+  const V=S.video, c=$('trk');
+  if(!V||!V.track||!V.dur){ c.hidden=true; return; }
+  c.hidden=false;
+  const dpr=Math.min(window.devicePixelRatio||1,2), W=Math.max(1,Math.round(c.clientWidth*dpr)), H=Math.round(6*dpr);
+  c.width=W; c.height=H; const g=c.getContext('2d'), cs=getComputedStyle(document.documentElement);
+  const T=V.track.t, Q=V.track.q, n=T.length, x=t=>Math.max(0,Math.min(W,t/V.dur*W));
+  g.fillStyle=cs.getPropertyValue('--ok').trim()||'#2b8a3e';
+  for(let i=0;i<n;){ if(Number.isNaN(Q[i*8])){ i++; continue; } let j=i; while(j+1<n&&!Number.isNaN(Q[(j+1)*8])) j++;
+    const a=x(T[i]), b=j+1<n?x(T[j+1]):W; g.fillRect(a,0,Math.max(1,b-a),H); i=j+1; }
+  g.fillStyle=cs.getPropertyValue('--ink').trim()||'#000';
+  V.keys.forEach(k=>g.fillRect(x(k.t)-dpr,0,2*dpr,H));
+}
+/** Analiza el video para seguir la superficie. Devuelve true si quedó listo. */
+async function runTrack(){
+  const V=S.video; if(!V||V.tracking) return false;
+  if(!('VideoDecoder' in window)){ setTMsg('Este navegador no puede analizar videos. Usa Chrome, Edge o Safari actualizados.','bad'); return false; }
+  if(!V.el.paused) V.el.pause();
+  if(!V.track){ V.keys=[{t:V.el.currentTime,q:S.q.map(p=>({...p})),main:true}]; V.shape=V.keys[0].q; }
+  const job={cancel:false}; V.tracking=job; updTrackUI(); render(); $('tprogBar').style.width='0%';
+  setTMsg('Analizando el video…');
+  let ok=false;
+  try{
+    const [M,T]=await Promise.all([loadMB(),loadTRK()]);
+    // el primer momento marcado va primero: define la superficie para todos los demás
+    const keys=[...V.keys].sort((a,b)=>b.main-a.main).map(k=>({t:k.t,q:k.q.map(p=>({...p}))})), kv=V.kv, t0=performance.now();
+    const res=await T.analyze({M,file:V.file,keys,reflective:$('refl').checked,cancelled:()=>job.cancel||V.dead,
+      onProgress:p=>{ $('tprogBar').style.width=Math.round(p*100)+'%';
+        const el=(performance.now()-t0)/1000, left=p>.04?el*(1-p)/p:0;
+        setTMsg('Analizando el video… '+Math.round(p*100)+' %'+(left>8?' (unos '+(left<90?Math.round(left/5)*5+' s':Math.round(left/60)+' min')+')':'')); }});
+    if(V.dead||job.cancel) throw Object.assign(new Error('cancel'),{name:'Cancel'});
+    V.track=res; V.trackVer=(V.trackVer||0)+1; V.stale=V.kv!==kv; ok=true;
+    const pct=Math.round(res.found*100);
+    if(res.found<.03) setTMsg('No pude seguir la superficie. Prueba marcando las esquinas en otro momento, donde se vea más nítida y de frente.','bad');
+    else setTMsg('Listo: la superficie aparece en el '+pct+' % del video (la franja verde bajo la película). Dale play para revisarlo.','ok');
+  }catch(e){
+    const name=e&&e.name||'';
+    if(/Cancel/i.test(name)) setTMsg('Cancelado.');
+    else if(e&&e.message==='nodec') setTMsg('Tu navegador no puede leer el formato de este video. Prueba en Safari o Chrome, o convierte el video a MP4.','bad');
+    else setTMsg('No se pudo analizar el video. Prueba con un video más corto.','bad');
+    if(!V.track){ V.keys=[]; V.shape=null; }
+  }
+  if(V.tracking===job) V.tracking=null;
+  updTrackUI(); drawTrk(); render();
+  return ok;
+}
+$('trackBtn').onclick=runTrack;
+// Una pantalla apagada o un vidrio no tienen textura propia, solo reflejos que se mueven distinto: con esta opción
+// el seguimiento ignora el interior y sigue el marco y lo que rodea la superficie.
+$('refl').addEventListener('change',()=>{ const V=S.video; if(V&&V.track){ V.stale=true; V.kv=(V.kv||0)+1; updTrackUI(); } });
+$('trackCancel').onclick=()=>{ const V=S.video; if(V&&V.tracking) V.tracking.cancel=true; };
+$('trackOff').onclick=()=>{ clearTrack(); setTMsg('Seguimiento quitado: el letrero vuelve a quedarse fijo.'); };
+
 let conv=null;
 function evenDims(W,H,cap){const s=cap?Math.min(1,cap/Math.min(W,H)):1;const ev=v=>Math.max(2,Math.round(v*s/2)*2);return [ev(W),ev(H)];}
+/** Recorte del formato elegido (vertical, cuadrado…) dentro de un fotograma W×H: {x,y,w,h} en píxeles pares. */
+function cropRect(W,H){
+  const a=+$('vfmt').value, o=$('vcrop').value/100; if(!a) return {x:0,y:0,w:W,h:H};
+  const ev=v=>Math.max(2,Math.round(v/2)*2);
+  if(W/H>a){ const w=Math.min(W,ev(H*a)); return {x:Math.round((W-w)*o),y:0,w,h:H}; }
+  const h=Math.min(H,ev(W/a)); return {x:0,y:Math.round((H-h)*o),w:W,h};
+}
+/** Al elegir un formato, el encuadre se centra en el letrero. */
+function centerCrop(){
+  const a=+$('vfmt').value; $('vcropBox').hidden=!a; if(!a){ render(); return; }
+  const cx=S.q.reduce((s,p)=>s+p.x,0)/4, cy=S.q.reduce((s,p)=>s+p.y,0)/4, W=S.bgW, H=S.bgH, r=cropRect(W,H);
+  const o=r.w<W?(cx*W-r.w/2)/(W-r.w):r.h<H?(cy*H-r.h/2)/(H-r.h):.5;
+  $('vcrop').value=Math.round(Math.max(0,Math.min(1,o))*100); render();
+}
+$('vfmt').addEventListener('change',centerCrop); $('vcrop').addEventListener('input',render);
+/** Bitrate de salida: al menos el del video original (reescalado a la nueva resolución), para no perder calidad
+    al volver a codificarlo. Un celular graba 1080p a 15-25 Mbps; el ajuste "alto" por defecto de Mediabunny da ~6 Mbps. */
+async function targetBitrate(M,input,W,H){
+  let src=0,sw=W,sh=H;
+  try{ const t=await input.getPrimaryVideoTrack(); sw=t.displayWidth; sh=t.displayHeight; src=(await t.computePacketStats(600)).averageBitrate||0; }catch(e){}
+  const px=W*H, floor=12e6*Math.pow(px/(1920*1080),.95);   // mínimo: ~12 Mbps en 1080p
+  const scaled=src*Math.pow(px/Math.max(1,sw*sh),.95)*1.2;
+  return Math.round(Math.min(Math.max(floor,scaled),Math.max(80e6,floor)));
+}
 async function exportVideo(){
   const V=S.video; if(!V) return;
   if(!('VideoEncoder' in window)||!('VideoFrame' in window)){ setMsg('Este navegador no puede crear videos. Usa Chrome, Edge o Safari actualizados. Mientras, puedes descargar "Solo el contenido".','bad'); return; }
   if(!V.el.paused) V.el.pause();
-  const btns=[$('expVid'),$('expFull'),$('expOnly')]; btns.forEach(b=>b.disabled=true);
+  if(V.tracking) return;
+  let cap=0; // si la resolución original falla (memoria del celular), se reintenta sola a 1080p
+  if(V.track&&V.stale&&!(await runTrack())) return;
+  const btns=[$('expVid'),$('expFull'),$('expOnly'),$('trackBtn')]; btns.forEach(b=>b.disabled=true);
   $('cancelVid').hidden=false; $('prog').hidden=false; $('progBar').style.width='0%'; $('result').hidden=true;
   setMsg('Preparando…');
-  try{
+  for(;;) try{
     const M=await loadMB(); await loadFont();
-    const [W,H]=evenDims(S.bgW,S.bgH,+$('vq').value);
-    // Capa con el contenido ya deformado, calculada una sola vez.
-    const layer=mk(W,H), lg=layer.getContext('2d',{willReadFrequently:true});
-    const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(P,4096), B=bbox(P,W,H);
-    if(B.w>0&&B.h>0){ const img=lg.createImageData(B.w,B.h); warp(img,B,P,src,'write',$('op').value/100); lg.putImageData(img,B.x0,B.y0); }
-    const mult=blendMode()==='multiply';
+    const [W,H]=evenDims(S.bgW,S.bgH,+$('vq').value||cap);
+    // Capa con el contenido deformado: una sola vez si la cámara está quieta, en cada fotograma si hay seguimiento.
+    const layer=mk(W,H), lg=layer.getContext('2d',{willReadFrequently:true}), op=$('op').value/100, tracked=!!V.track;
+    const px=q=>q.map(p=>({x:p.x*W,y:p.y*H}));
+    const src0=getSource(px(shapeQ()),4096), anim=S.mode==='text'&&!!$('anim').value; let src=src0;
+    const cpu=(P,gain)=>{ lg.clearRect(0,0,W,H); const B=bbox(P,W,H);
+      if(B.w>0&&B.h>0){ const img=lg.createImageData(B.w,B.h); warp(img,B,P,pixelsOf(src),'write',op,gain); lg.putImageData(img,B.x0,B.y0); }
+      return layer; };
+    const paint=(P,gain)=>GPU.draw(P,W,H,src,op,gain)||cpu(P,gain);
+    const lit=lightOn()&&!!(await measureLight().catch(()=>null)), vid=S.mode==='video'&&S.cvid&&S.cvid.ready, CR=vid?await contentReader(M):null;
+    const still=tracked||lit||vid||anim?null:cpu(px(S.q));
+    const mult=blendMode()==='multiply', occ=$('occ').checked&&!!(await loadSeg().catch(()=>null)), EMASK=mk(1,1), ETMP=mk(1,1);
     const alphaAt=timeAlpha;
     const c=mk(W,H), g=c.getContext('2d');
     const input=new M.Input({source:new M.BlobSource(V.file),formats:M.ALL_FORMATS});
     const output=new M.Output({format:new M.Mp4OutputFormat({fastStart:'in-memory'}),target:new M.BufferTarget()});
-    const codec=await M.getFirstEncodableVideoCodec(['avc','hevc','vp9','av1'],{width:W,height:H});
+    // formato vertical / cuadrado: se compone el fotograma completo y se entrega solo el recorte
+    const CR2=cropRect(W,H), crop=CR2.w!==W||CR2.h!==H, oc=crop?mk(CR2.w,CR2.h):null, og=crop?oc.getContext('2d'):null;
+    const codec=await M.getFirstEncodableVideoCodec(['avc','hevc','vp9','av1'],{width:CR2.w,height:CR2.h});
     if(!codec) throw new Error('noenc');
+    const bitrate=await targetBitrate(M,input,CR2.w,CR2.h);
     conv=await M.Conversion.init({input,output,video:{
-      width:W,height:H,fit:'fill',codec,quality:M.QUALITY_HIGH,forceTranscode:true,allowTransformationMetadata:false,
-      processedWidth:W,processedHeight:H,
-      process:sample=>{
+      width:W,height:H,fit:'fill',codec,bitrate,forceTranscode:true,allowTransformationMetadata:false,
+      processedWidth:CR2.w,processedHeight:CR2.h,
+      process:async sample=>{
         g.globalCompositeOperation='source-over'; g.globalAlpha=1;
         sample.draw(g,0,0,W,H);
-        const a=alphaAt(sample.timestamp);
-        if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(layer,0,0); }
+        let a=alphaAt(sample.timestamp), L=still;
+        if(a>0&&vid){ const f=await CR.at(contentTime(sample.timestamp)); if(f) src=f; else a=0; }
+        if(a>0&&anim){ const pr=animP(sample.timestamp); src=pr<1?getSource(px(shapeQ()),2048,pr):src0; }
+        if(a>0&&(tracked||lit||vid||anim)){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=paint(px(q),lit?lightGain(sample.timestamp):null); else a=0; }
+        if(a>0&&occ){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=occlude(L,personMask(c,W,H,px(q),W,H,EMASK),W,H,ETMP); }
+        if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(L,0,0); }
+        if(crop){ og.drawImage(c,CR2.x,CR2.y,CR2.w,CR2.h,0,0,CR2.w,CR2.h); return oc; }
         return c;
       }}});
     if(!conv.isValid){
@@ -792,24 +1558,31 @@ async function exportVideo(){
     const lostAudio=conv.discardedTracks.some(d=>d.track.type==='audio'&&d.reason!=='discarded_by_user');
     conv.onProgress=p=>{ $('progBar').style.width=Math.round(p*100)+'%'; setMsg('Creando el video… '+Math.round(p*100)+' %'); };
     setMsg('Creando el video… 0 %');
-    await conv.execute();
+    try{ await conv.execute(); }finally{ if(CR) await CR.close(); }
     const blob=new Blob([output.target.buffer],{type:'video/mp4'});
     free(layer); free(c);
     await saveVideo(blob,'oblicua-video.mp4');
     if(lostAudio) setMsg('Listo, pero tu navegador no pudo conservar el audio de este video.','bad');
+    break;
   }catch(e){
-    const name=e&&e.name||'';
-    if(/Cancel/i.test(name)||/cancel/i.test(e&&e.message||'')) setMsg('Cancelado.');
+    const name=e&&e.name||'', cancel=/Cancel/i.test(name)||/cancel/i.test(e&&e.message||'');
+    if(!cancel&&!cap&&!+$('vq').value&&Math.min(S.bgW,S.bgH)>1080&&!/^no(dec|enc)$/.test(e&&e.message)){
+      cap=1080; setMsg('El video es muy grande para este dispositivo; lo intento de nuevo en 1080p…'); continue;
+    }
+    if(cancel) setMsg('Cancelado.');
     else if(e&&e.message==='nodec') setMsg('Tu navegador no puede leer el formato de este video. Prueba en Safari o Chrome, o convierte el video a MP4.','bad');
     else if(e&&e.message==='noenc') setMsg('Este navegador no puede codificar video. Prueba en Chrome, Edge o Safari actualizados.','bad');
     else setMsg('No se pudo crear el video. Prueba con 720p o con un video más corto.','bad');
+    break;
   }
   conv=null; btns.forEach(b=>b.disabled=false); $('cancelVid').hidden=true; $('prog').hidden=true;
+  GPU.forget(); layerKey=''; updTrackUI(); render();
 }
 $('expVid').onclick=exportVideo;
 $('cancelVid').onclick=()=>{ if(conv) conv.cancel(); };
 let lastVid=null;
 async function saveVideo(blob,name){
+  S.prog.saved=true; render();
   const url=URL.createObjectURL(blob);
   $('resnote').textContent='Si no se descargó solo, usa el botón de abajo o el menú del video.';
   $('resimg').hidden=true; const rv=$('resvid'); rv.hidden=false; rv.src=url; $('result').hidden=false;
@@ -823,26 +1596,51 @@ $('shareVid').onclick=async()=>{ if(!lastVid) return; try{ await navigator.share
 /* ---------- controls ---------- */
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{
   S.mode=b.dataset.mode; document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));
-  $('textCtl').hidden=S.mode!=='text'; $('imgCtl').hidden=S.mode!=='image';
+  $('textCtl').hidden=S.mode!=='text'; $('imgCtl').hidden=S.mode!=='image'; $('vidCtl').hidden=S.mode!=='video';
+  if(S.mode!=='video'&&S.cvid) S.cvid.el.pause();
   pvKey=''; render();
 });
 $('align').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.align=b.dataset.a;[...$('align').children].forEach(x=>x.setAttribute('aria-pressed',x===b));render();});
 $('sw').addEventListener('click',e=>{const b=e.target.closest('.sw');if(!b)return;S.color=b.dataset.c;[...$('sw').querySelectorAll('.sw')].forEach(x=>x.setAttribute('aria-pressed',x===b));render();});
 $('cpick').addEventListener('input',e=>{S.color=e.target.value;[...$('sw').querySelectorAll('.sw')].forEach(x=>x.setAttribute('aria-pressed','false'));render();});
 ['txt','sub','subsize','subcaps','size','vpos','op','shadow','outline','blend'].forEach(id=>$(id).addEventListener('input',render));
+$('blend').addEventListener('input',updLightUI);
+['txt','sub'].forEach(id=>$(id).addEventListener('input',()=>{S.prog.content=true;}));
 ['font','subfont'].forEach(id=>$(id).addEventListener('change',async()=>{styleSel($('font'));styleSel($('subfont'));await loadFont();pvKey='';render();}));
+/* estilo recordado: fuentes, color, alineación, tamaños y fusión (no el texto), solo en este navegador */
+const STYLE_IDS=['font','subfont','size','subsize','subcaps','vpos','shadow','op','blend'], STYLE_KEY='oblicua-estilo';
+const STYLE_DEF=Object.fromEntries(STYLE_IDS.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value]));
+function saveStyle(){
+  const o=Object.fromEntries(STYLE_IDS.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])); o.color=S.color; o.align=S.align;
+  try{ localStorage.setItem(STYLE_KEY,JSON.stringify(o)); }catch(e){}
+}
+function applyStyle(o){
+  STYLE_IDS.forEach(id=>{ if(o[id]===undefined) return; if($(id).type==='checkbox') $(id).checked=!!o[id]; else $(id).value=o[id]; });
+  if(o.color){ S.color=o.color; [...$('sw').querySelectorAll('.sw')].forEach(x=>x.setAttribute('aria-pressed',x.dataset.c===o.color)); }
+  if(o.align){ S.align=o.align; [...$('align').children].forEach(x=>x.setAttribute('aria-pressed',x.dataset.a===o.align)); }
+  ['size','subsize','vpos'].forEach(id=>{ const out=$(id+'_o'); if(out) out.textContent=$(id).value+'%'; });
+}
+try{ const o=JSON.parse(localStorage.getItem(STYLE_KEY)||'null'); if(o) applyStyle(o); }catch(e){}
+STYLE_IDS.forEach(id=>$(id).addEventListener(id==='font'||id==='subfont'?'change':'input',saveStyle));
+$('sw').addEventListener('click',saveStyle); $('cpick').addEventListener('input',saveStyle); $('align').addEventListener('click',saveStyle);
+$('styleReset').onclick=async()=>{ applyStyle({...STYLE_DEF,color:'#16181d',align:'center'}); try{ localStorage.removeItem(STYLE_KEY); }catch(e){}
+  styleSel($('font')); styleSel($('subfont')); await loadFont(); pvKey=''; render(); };
 styleSel($('font')); styleSel($('subfont'));
 ['size','subsize','vpos'].forEach(id=>{const upd=()=>$(id+'_o').textContent=$(id).value+'%';$(id).addEventListener('input',upd);upd();});
 const ta=$('txt'); const grow=()=>{ta.style.height='auto';ta.style.height=Math.max(46,ta.scrollHeight)+'px';}; ta.addEventListener('input',grow); requestAnimationFrame(grow);
+$('cvfile').addEventListener('change',e=>{ const f=e.target.files[0]; e.target.value=''; if(f) loadContentVideo(f); });
+$('cvloop').addEventListener('change',render);
+$('anim').addEventListener('change',()=>{ pvKey=''; const V=S.video; if(V&&$('anim').value){ seekTo(V.t0<=.05?0:V.t0); } render(); });
 $('cfile').addEventListener('change',e=>{
   const f=e.target.files[0]; e.target.value=''; if(!f)return;
-  const im=new Image(); im.onload=()=>{ S.imgSrc=imageSourceFrom(im); $('cname').textContent=`Imagen: ${f.name}. Sus esquinas siguen a los 4 puntos.`; pvKey=''; render(); };
+  const im=new Image(); im.onload=()=>{ S.imgSrc=imageSourceFrom(im); S.prog.content=true; $('cname').textContent=`Imagen: ${f.name}. Sus esquinas siguen a los 4 puntos.`; pvKey=''; render(); };
   im.onerror=()=>setMsg('No pude abrir esa imagen.','bad'); im.src=URL.createObjectURL(f);
 });
 
 /* ---------- export ---------- */
 function setMsg(t,cls){const m=$('msg');m.textContent=t;m.className='msg'+(cls?' '+cls:'');}
 async function save(blob,name){
+  S.prog.saved=true; render();
   $('resnote').textContent='Si no se descargó solo: mantén presionada la imagen y elige Guardar.';
   $('resimg').hidden=false; $('resvid').hidden=true; $('shareVid').hidden=true;
   $('resimg').src=URL.createObjectURL(blob); $('result').hidden=false;
@@ -859,13 +1657,23 @@ async function exportIt(full){
   try{
     let W=S.bgW,H=S.bgH; const cap=6000/Math.max(W,H); if(cap<1){W=Math.round(W*cap);H=Math.round(H*cap);}
     const c=mk(W,H), g=c.getContext('2d',{willReadFrequently:true});
-    const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(P,4096), B=bbox(P,W,H);
-    if(full){
+    const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=pixelsOf(getSource(shapeQ().map(p=>({x:p.x*W,y:p.y*H})),4096));
+    const B=S.video&&S.video.track&&!quadAt(curT())?{w:0,h:0}:bbox(P,W,H); // sin la superficie en este fotograma, sin letrero
+    const gain=S.video?lightGain(curT()):null, gainC=gain&&Float32Array.from(gain);
+    const occ=$('occ').checked&&SEG&&B.w>0&&B.h>0;
+    if(occ){ // el contenido va en una capa aparte para recortar a las personas antes de fusionarlo
+      const lay=mk(W,H), lg=lay.getContext('2d',{willReadFrequently:true}), img=lg.createImageData(B.w,B.h);
+      warp(img,B,P,src,'write',$('op').value/100,gainC); lg.putImageData(img,B.x0,B.y0);
+      const O=occlude(lay,personMask(S.bg,S.bgW,S.bgH,P,W,H,mk(1,1)),W,H,mk(1,1)); free(lay);
+      if(full){ g.drawImage(S.bg,0,0,W,H); g.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; }
+      g.drawImage(O,0,0); g.globalCompositeOperation='source-over'; free(O);
+      const blob=await new Promise(r=>c.toBlob(r,full?'image/jpeg':'image/png',.93)); free(c); await save(blob,full?'oblicua.jpg':'oblicua-contenido.png');
+    } else if(full){
       g.drawImage(S.bg,0,0,W,H);
-      if(B.w>0&&B.h>0){ const img=g.getImageData(B.x0,B.y0,B.w,B.h); warp(img,B,P,src,blendMode(),$('op').value/100); g.putImageData(img,B.x0,B.y0); }
+      if(B.w>0&&B.h>0){ const img=g.getImageData(B.x0,B.y0,B.w,B.h); warp(img,B,P,src,blendMode(),$('op').value/100,gainC); g.putImageData(img,B.x0,B.y0); }
       const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.93)); free(c); await save(blob,'oblicua.jpg');
     } else {
-      if(B.w>0&&B.h>0){ const img=g.createImageData(B.w,B.h); warp(img,B,P,src,'write',$('op').value/100); g.putImageData(img,B.x0,B.y0); }
+      if(B.w>0&&B.h>0){ const img=g.createImageData(B.w,B.h); warp(img,B,P,src,'write',$('op').value/100,gainC); g.putImageData(img,B.x0,B.y0); }
       const blob=await new Promise(r=>c.toBlob(r,'image/png')); free(c); await save(blob,'oblicua-contenido.png');
     }
   }catch(e){ setMsg('No se pudo generar la imagen. Prueba con una foto más pequeña.','bad'); }
