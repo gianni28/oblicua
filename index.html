@@ -326,6 +326,8 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
             </div>
             <div class="mini"><label for="vpos">Altura</label><input type="range" id="vpos" min="5" max="95" value="50"><output id="vpos_o">50%</output></div>
             <label class="check"><input type="checkbox" id="shadow"> Sombra suave</label>
+            <div class="field" id="animBox" hidden><label class="l" for="anim">Cómo aparece el texto en el video</label>
+              <select id="anim"><option value="">De una vez</option><option value="type">Máquina de escribir</option><option value="letters">Letra por letra</option><option value="up">Subiendo</option><option value="zoom">Acercándose</option></select></div>
             <p class="note" id="styleNote">Oblicua recuerda tu estilo (fuentes, color, tamaños) para la próxima vez. <button class="linkbtn" type="button" id="styleReset">Volver al estilo original</button></p>
           </div>
         </div>
@@ -521,7 +523,13 @@ function styleSel(sel){const v=sel.value==='same'?$('font').value:sel.value;cons
 const fstr=(f,px)=>`${f.st==='italic'?'italic ':''}${f.w} ${px}px "${f.fam}", system-ui, sans-serif`;
 async function loadFont(){try{await Promise.all([document.fonts.load(fstr(fontSpec('title'),60)),document.fonts.load(fstr(fontSpec('sub'),60))]);}catch(e){}}
 
-function textSource(Ws,Hs){
+/** Progreso (0…1) de la animación de entrada del texto en el segundo t; 1 = texto completo. */
+const ANIM_DUR=1.2;
+function animP(t){
+  const V=S.video; if(!V||S.mode!=='text'||!$('anim').value) return 1;
+  const t0=V.t0<=.05?0:V.t0; return Math.max(0,Math.min(1,(t-t0)/ANIM_DUR));
+}
+function textSource(Ws,Hs,p=1){
   const c=SCR,g=SCRX; c.width=Ws; c.height=Hs; g.setTransform(1,0,0,1,0,0); g.shadowColor='transparent'; g.shadowBlur=0; g.shadowOffsetY=0; g.clearRect(0,0,Ws,Hs);
   const main=$('txt').value.replace(/\s+$/,'').split('\n').filter((l,i,a)=>l.trim()||a.length>1);
   let sub=$('sub').value.trim(); const sr=$('subsize').value/100, caps=$('subcaps').checked; if(caps) sub=sub.toLocaleUpperCase('es');
@@ -538,12 +546,32 @@ function textSource(Ws,Hs){
     g.fillStyle=S.color; g.textBaseline='middle'; g.textAlign=S.align;
     const x=S.align==='left'?pad:S.align==='right'?Ws-pad:Ws/2;
     const bh=bhB*k; let y=Hs*($('vpos').value/100)-bh/2; y=Math.max(Hs*.02,Math.min(y,Hs*.98-bh));
+    const TOTAL=items.reduce((s,i)=>s+[...i.t].length,0); let done=0;
     items.forEach(i=>{
       const fs=base*i.r*k; if(i.sub&&hasBoth) y+=gapB*k;
       g.font=fstr(fOf(i),fs);
       if($('shadow').checked){g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=fs*.12;g.shadowOffsetY=fs*.05;}
       if('letterSpacing' in g) g.letterSpacing=(LS(i)*fs)+'px';
-      g.fillText(i.t,x,y+fs*lh/2); y+=fs*lh;
+      const yy=y+fs*lh/2, an=p<1?$('anim').value:'';
+      if(!an) g.fillText(i.t,x,yy);
+      else{
+        const e=1-Math.pow(1-p,3), full=g.measureText(i.t).width, x0=S.align==='left'?x:S.align==='right'?x-full:x-full/2;
+        if(an==='up'||an==='zoom'){
+          g.save(); g.globalAlpha=e;
+          if(an==='up') g.translate(0,(1-e)*Hs*.12); else { const sc=.8+.2*e, cy=yy; g.translate(Ws/2,cy); g.scale(sc,sc); g.translate(-Ws/2,-cy); }
+          g.fillText(i.t,x,yy); g.restore();
+        } else {
+          // letra por letra: cada letra con su propia aparición, en orden a lo largo de todas las líneas
+          const n=[...i.t].length, chars=[...i.t]; g.textAlign='left';
+          for(let k=0;k<n;k++){
+            const q=an==='type'?(p*TOTAL>=done+k+1?1:0):Math.max(0,Math.min(1,(p*(TOTAL+5)-(done+k))/5));
+            if(q<=0) break;
+            g.globalAlpha=q; g.fillText(chars[k],x0+g.measureText(chars.slice(0,k).join('')).width,yy);
+          }
+          g.globalAlpha=1; g.textAlign=S.align; done+=n;
+        }
+      }
+      y+=fs*lh;
     });
   }
   const out={d:g.getImageData(0,0,Ws,Hs).data,w:Ws,h:Hs}; c.width=1; c.height=1; return out;
@@ -562,13 +590,13 @@ function placeholder(){
   g.fillText('Sube tu imagen',400,250); const r=imageSourceFrom(c); free(c); return r;
 }
 let PH=null,PHV=null;
-function getSource(P,maxDim){
+function getSource(P,maxDim,p=1){
   if(S.mode==='image') return S.imgSrc||(PH=PH||placeholder());
   if(S.mode==='video') return S.cvid&&S.cvid.ready?S.cvid.src:(PHV=PHV||vidPlaceholder());
   const {aspect,wide}=quadInfo(P);
   let Ws=Math.round(Math.min(maxDim,Math.max(64,wide*1.25))), Hs=Math.round(Ws/aspect);
   if(Hs>maxDim){Hs=maxDim;Ws=Math.round(Hs*aspect);}
-  return textSource(Math.max(16,Ws),Math.max(16,Hs));
+  return textSource(Math.max(16,Ws),Math.max(16,Hs),p);
 }
 
 function vidPlaceholder(){
@@ -811,7 +839,7 @@ async function measureLight(){
   finally{ LIGHT.busy=null; }
 }
 function updLightUI(){
-  const V=S.video; $('lightBox').hidden=!V; if(!V) return;
+  const V=S.video; $('lightBox').hidden=!V; $('animBox').hidden=!V; if(!V) return;
   if(!LIGHT.busy) setLNote($('light').checked&&blendMode()==='multiply'?'Con la fusión "Impreso" el letrero ya toma la luz de la superficie por sí solo.':LIGHT_TIP);
 }
 $('light').addEventListener('change',()=>{ updLightUI(); if(lightOn()) measureLight().then(render,()=>{}); render(); });
@@ -913,9 +941,9 @@ function contentKey(P){
 }
 /** Devuelve un canvas (transparente, del tamaño de la vista) con el contenido deformado. Solo lo recalcula cuando algo cambió.
     SP: esquinas que definen la forma del contenido (con seguimiento, las del momento marcado, para que el texto no cambie). */
-function updateLayer(P,W,H,SP,gain){
-  const key=contentKey(SP);
-  if(key!==pvKey){ pvSrc=getSource(SP,1600); pvKey=key; layerKey=''; }
+function updateLayer(P,W,H,SP,gain,p=1){
+  const key=contentKey(SP)+(p<1?'|a'+$('anim').value+p.toFixed(3):'');
+  if(key!==pvKey){ pvSrc=getSource(SP,1600,p); pvKey=key; layerKey=''; }
   const lk=key+'|'+P.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(';')+'|'+W+'x'+H+'|'+$('op').value+'|'+(gain?Array.from(gain,v=>v.toFixed(2)).join(','):'')+(pvSrc.el?'|'+pvSrc.el.currentTime:'');
   if(lk===layerKey&&layerCv) return layerCv;
   layerCv=GPU.draw(P,W,H,pvSrc,$('op').value/100,gain);
@@ -954,7 +982,7 @@ function draw(){
     let a=1;
     if(V){ a=timeAlpha(V.el.currentTime); if(!playing&&a<.3) a=.3; }
     if(lost) a=0;
-    if(a>0){ let L=updateLayer(P,W,H,SP,V?lightGain(curT()):null);
+    if(a>0){ let L=updateLayer(P,W,H,SP,V?lightGain(curT()):null,playing?animP(curT()):1); // en pausa, el texto completo para editarlo
       if($('occ').checked&&SEG){
         // al reproducir, como mucho ~15 veces por segundo para no trabar la reproducción en celulares lentos
         const k=bgVer+'|'+(V?curT():0)+'|'+W+'x'+H+'|'+P.map(p=>p.x.toFixed(0)+','+p.y.toFixed(0)).join(';'), now=performance.now();
@@ -1490,13 +1518,13 @@ async function exportVideo(){
     // Capa con el contenido deformado: una sola vez si la cámara está quieta, en cada fotograma si hay seguimiento.
     const layer=mk(W,H), lg=layer.getContext('2d',{willReadFrequently:true}), op=$('op').value/100, tracked=!!V.track;
     const px=q=>q.map(p=>({x:p.x*W,y:p.y*H}));
-    let src=getSource(px(shapeQ()),4096);
+    const src0=getSource(px(shapeQ()),4096), anim=S.mode==='text'&&!!$('anim').value; let src=src0;
     const cpu=(P,gain)=>{ lg.clearRect(0,0,W,H); const B=bbox(P,W,H);
       if(B.w>0&&B.h>0){ const img=lg.createImageData(B.w,B.h); warp(img,B,P,pixelsOf(src),'write',op,gain); lg.putImageData(img,B.x0,B.y0); }
       return layer; };
     const paint=(P,gain)=>GPU.draw(P,W,H,src,op,gain)||cpu(P,gain);
     const lit=lightOn()&&!!(await measureLight().catch(()=>null)), vid=S.mode==='video'&&S.cvid&&S.cvid.ready, CR=vid?await contentReader(M):null;
-    const still=tracked||lit||vid?null:cpu(px(S.q));
+    const still=tracked||lit||vid||anim?null:cpu(px(S.q));
     const mult=blendMode()==='multiply', occ=$('occ').checked&&!!(await loadSeg().catch(()=>null)), EMASK=mk(1,1), ETMP=mk(1,1);
     const alphaAt=timeAlpha;
     const c=mk(W,H), g=c.getContext('2d');
@@ -1515,7 +1543,8 @@ async function exportVideo(){
         sample.draw(g,0,0,W,H);
         let a=alphaAt(sample.timestamp), L=still;
         if(a>0&&vid){ const f=await CR.at(contentTime(sample.timestamp)); if(f) src=f; else a=0; }
-        if(a>0&&(tracked||lit||vid)){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=paint(px(q),lit?lightGain(sample.timestamp):null); else a=0; }
+        if(a>0&&anim){ const pr=animP(sample.timestamp); src=pr<1?getSource(px(shapeQ()),2048,pr):src0; }
+        if(a>0&&(tracked||lit||vid||anim)){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=paint(px(q),lit?lightGain(sample.timestamp):null); else a=0; }
         if(a>0&&occ){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=occlude(L,personMask(c,W,H,px(q),W,H,EMASK),W,H,ETMP); }
         if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(L,0,0); }
         if(crop){ og.drawImage(c,CR2.x,CR2.y,CR2.w,CR2.h,0,0,CR2.w,CR2.h); return oc; }
@@ -1600,6 +1629,7 @@ styleSel($('font')); styleSel($('subfont'));
 const ta=$('txt'); const grow=()=>{ta.style.height='auto';ta.style.height=Math.max(46,ta.scrollHeight)+'px';}; ta.addEventListener('input',grow); requestAnimationFrame(grow);
 $('cvfile').addEventListener('change',e=>{ const f=e.target.files[0]; e.target.value=''; if(f) loadContentVideo(f); });
 $('cvloop').addEventListener('change',render);
+$('anim').addEventListener('change',()=>{ pvKey=''; const V=S.video; if(V&&$('anim').value){ seekTo(V.t0<=.05?0:V.t0); } render(); });
 $('cfile').addEventListener('change',e=>{
   const f=e.target.files[0]; e.target.value=''; if(!f)return;
   const im=new Image(); im.onload=()=>{ S.imgSrc=imageSourceFrom(im); S.prog.content=true; $('cname').textContent=`Imagen: ${f.name}. Sus esquinas siguen a los 4 puntos.`; pvKey=''; render(); };
