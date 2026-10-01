@@ -12,7 +12,7 @@ Nació para poner el título de mis covers de piano sobre el atril en los videos
 
 - Título y subtítulo opcional, cada uno con su propia fuente, y opción de mayúsculas.
 - Modo imagen: pon un logo o cualquier PNG sobre la superficie.
-- **Videos**: eliges un fotograma, ubicas el letrero y descargas el video completo en MP4 con el letrero puesto y el audio original. Puedes decidir en qué segundo aparece y desaparece, con transición suave.
+- **Editor de video**: reproduces el video con el letrero encima, marcas en una línea de tiempo con miniaturas cuándo aparece y desaparece (con transición suave) y descargas el MP4 con el audio original.
 - Exporta la foto completa o solo el contenido en **PNG transparente**, listo para un editor de video.
 - Lupa de precisión para mover las esquinas, arrastrar y soltar, y pegar desde el portapapeles.
 - Todo corre en el navegador: las fotos y videos nunca salen del dispositivo.
