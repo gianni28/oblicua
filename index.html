@@ -84,13 +84,16 @@ details.flat>summary{display:none}
 .rec video{flex:1;min-height:0;width:100%;object-fit:contain;background:#000}
 .rtop{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
 .rtop span{background:rgba(0,0,0,.6);padding:5px 11px;border-radius:99px;font-size:13px;font-weight:700}
+.rleft{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.rset{display:flex;gap:6px;pointer-events:auto;align-items:flex-start}
+.rset select{font:inherit;font-size:14px;font-weight:700;background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:99px;padding:6px 10px;width:auto}
+.rset select:disabled{opacity:.4}
 .rtop .rtime{background:#e03131}
 .rerr{position:absolute;top:35%;left:16px;right:16px;margin:0;text-align:center;background:rgba(0,0,0,.75);padding:14px;border-radius:12px;font-size:15px}
 .rbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 18px)}
 .rbar .rbtn{font:inherit;font-size:15px;font-weight:700;background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:10px;padding:10px 12px;cursor:pointer;justify-self:start}
 .rbar .rbtn:disabled,.rbar select:disabled{opacity:.4}
 .rside{display:flex;gap:8px;justify-self:end;align-items:center}
-.rside select{font:inherit;font-size:15px;font-weight:700;background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:10px;padding:10px 8px;width:auto}
 .rshot{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
 .rshot span{width:58px;height:58px;border-radius:50%;background:#e03131;transition:all .2s}
 .rshot.on span{width:30px;height:30px;border-radius:7px}
@@ -390,15 +393,18 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
 
 <div class="rec" id="rec" hidden role="dialog" aria-modal="true" aria-label="Grabar video">
   <video id="recPrev" playsinline muted autoplay></video>
-  <div class="rtop"><span id="recInfo">Preparando la cámara…</span><span class="rtime" id="recTime" hidden>0:00</span></div>
+  <div class="rtop">
+    <div class="rleft"><span id="recInfo">Preparando la cámara…</span><span class="rtime" id="recTime" hidden>0:00</span></div>
+    <div class="rset">
+      <select id="recRes" aria-label="Resolución"><option value="1080">1080p</option><option value="2160">4K</option></select>
+      <select id="recFps" aria-label="Fotogramas por segundo"><option value="60">60 fps</option><option value="30">30 fps</option></select>
+    </div>
+  </div>
   <p class="rerr" id="recErr" hidden></p>
   <div class="rbar">
     <button class="rbtn" type="button" id="recClose">Cancelar</button>
     <button class="rshot" type="button" id="recGo" aria-label="Empezar a grabar" disabled><span></span></button>
-    <div class="rside">
-      <select id="recRes" aria-label="Calidad de grabación"><option value="1080">1080p</option><option value="2160">4K</option></select>
-      <button class="rbtn" type="button" id="recFlip" aria-label="Cambiar de cámara">Girar</button>
-    </div>
+    <div class="rside"><button class="rbtn" type="button" id="recFlip" aria-label="Cambiar de cámara">Girar</button></div>
   </div>
 </div>
 
@@ -802,12 +808,12 @@ function recStopStream(){ if(REC.stream) REC.stream.getTracks().forEach(t=>t.sto
 function recUI(){
   const on=!!REC.rec;
   $('recGo').classList.toggle('on',on); $('recGo').setAttribute('aria-label',on?'Terminar de grabar':'Empezar a grabar');
-  $('recFlip').disabled=on; $('recRes').disabled=on; $('recClose').textContent=on?'Descartar':'Cancelar'; $('recTime').hidden=!on;
+  $('recFlip').disabled=on; $('recRes').disabled=on; $('recFps').disabled=on; $('recClose').textContent=on?'Descartar':'Cancelar'; $('recTime').hidden=!on;
 }
 async function recCamera(){
   recStopStream(); $('recGo').disabled=true; $('recErr').hidden=true; $('recInfo').textContent='Preparando la cámara…';
   const big=$('recRes').value==='2160', W=big?3840:1920, H=big?2160:1080;
-  const video={facingMode:{ideal:REC.facing},width:{ideal:W},height:{ideal:H},frameRate:{ideal:30,max:30}};
+  const F=+$('recFps').value, video={facingMode:{ideal:REC.facing},width:{ideal:W},height:{ideal:H},frameRate:{ideal:F,max:F}};
   const music={echoCancellation:false,noiseSuppression:false,autoGainControl:false};
   let err=null;
   for(const c of [{video,audio:music},{video,audio:true},{video,audio:false}]){
@@ -823,7 +829,12 @@ async function recCamera(){
   }
   const v=$('recPrev'); v.srcObject=REC.stream; v.style.transform=REC.facing==='user'?'scaleX(-1)':'';
   try{ await v.play(); }catch(e){}
-  const st=REC.stream.getVideoTracks()[0].getSettings(), sh=Math.min(st.width||v.videoWidth||0,st.height||v.videoHeight||0);
+  const vt=REC.stream.getVideoTracks()[0], st=vt.getSettings(), sh=Math.min(st.width||v.videoWidth||0,st.height||v.videoHeight||0);
+  // ¿Cuántos fps permite esta cámara? Si no llega a 60, se ofrece solo 30.
+  let maxF=0; try{ maxF=(vt.getCapabilities&&vt.getCapabilities().frameRate||{}).max||0; }catch(e){}
+  const o60=$('recFps').options[0], no60=(maxF&&maxF<50)||(F>=60&&st.frameRate&&st.frameRate<50);
+  o60.disabled=!!no60; o60.textContent=no60?'60 fps (no disponible)':'60 fps';
+  if(no60&&F>=60) $('recFps').value='30';
   $('recInfo').textContent=(sh>=2000?'4K':sh?sh+'p':'Cámara lista')+(st.frameRate?' · '+Math.round(st.frameRate)+' fps':'')+(REC.stream.getAudioTracks().length?'':' · sin sonido');
   $('recGo').disabled=false;
 }
@@ -839,13 +850,13 @@ async function recToggle(){
   if(REC.rec){ REC.rec.stop(); return; }
   if(!REC.stream) return;
   const st=REC.stream.getVideoTracks()[0].getSettings(), px=(st.width||1920)*(st.height||1080);
-  const vbps=Math.round(Math.min(40e6,Math.max(12e6,16e6*px/(1920*1080)))), mime=recMime();
+  const fr=st.frameRate||+$('recFps').value, vbps=Math.round(Math.min(50e6,Math.max(12e6,16e6*px/(1920*1080)*(fr>=50?1.5:1)))), mime=recMime();
   REC.chunks=[]; REC.cancel=false;
   try{ REC.rec=new MediaRecorder(REC.stream,{...(mime?{mimeType:mime}:{}),videoBitsPerSecond:vbps,audioBitsPerSecond:192000}); }
   catch(e){ try{ REC.rec=new MediaRecorder(REC.stream); }catch(e2){ $('recErr').hidden=false; $('recErr').textContent='Este navegador no puede grabar video.'; return; } }
   REC.rec.ondataavailable=e=>{ if(e.data&&e.data.size) REC.chunks.push(e.data); };
   REC.rec.onstop=recDone;
-  REC.rec.start(); REC.t0=performance.now(); REC.res=$('recRes').value;
+  REC.rec.start(); REC.t0=performance.now(); REC.res=$('recRes').value; REC.fps=Math.round(fr);
   REC.timer=setInterval(()=>{ $('recTime').textContent=fmtT((performance.now()-REC.t0)/1000).replace(/\.\d$/,''); },250);
   $('recTime').textContent='0:00';
   try{ REC.lock=navigator.wakeLock?await navigator.wakeLock.request('screen'):null; }catch(e){}
@@ -858,21 +869,23 @@ function recDone(){
   const blob=new Blob(REC.chunks,{type}); REC.chunks=[];
   if(cancel||!blob.size) return;
   const f=new File([blob],'oblicua-grabacion.'+(/mp4/.test(type)?'mp4':'webm'),{type});
-  const res=REC.res; Promise.resolve(loadBgFile(f)).then(()=>recCheck(f,res));
+  const res=REC.res, want=REC.fps; Promise.resolve(loadBgFile(f)).then(()=>recCheck(f,res,want));
 }
 /** Si el celular no alcanzó a grabar a esa calidad, el archivo queda con pocos fotogramas: avisamos. */
-async function recCheck(f,res){
+async function recCheck(f,res,want){
   try{
     const M=await loadMB(), t=await new M.Input({source:new M.BlobSource(f),formats:M.ALL_FORMATS}).getPrimaryVideoTrack();
     const fps=(await t.computePacketStats()).averagePacketRate;
-    if(fps&&fps<24) setTMsg('La grabación quedó a '+Math.round(fps)+' fotogramas por segundo: tu celular no alcanzó a grabar '+(res==='2160'?'en 4K':'a esa calidad')+' desde el navegador. '+(res==='2160'?'Prueba en 1080p, o graba con la app Cámara y súbelo desde la Fototeca.':'Prueba grabar con la app Cámara y subirlo desde la Fototeca.'),'bad');
+    if(fps&&want&&fps<want*.8)
+      setTMsg('La grabación quedó a '+Math.round(fps)+' fotogramas por segundo en vez de '+want+': tu celular no alcanzó a grabar a esa calidad desde el navegador. '
+        +(want>=50?'Prueba con 30 fps':res==='2160'?'Prueba en 1080p':'Prueba')+(want>=50||res==='2160'?', o graba':' grabar')+' con la app Cámara y '+(want>=50||res==='2160'?'súbelo':'subirlo')+' desde la Fototeca.','bad');
   }catch(e){}
 }
 if(canRec){
   $('recOpen').hidden=false;
   $('recOpen').onclick=recOpen; $('recClose').onclick=recClose; $('recGo').onclick=recToggle;
   $('recFlip').onclick=()=>{ REC.facing=REC.facing==='environment'?'user':'environment'; recCamera(); };
-  $('recRes').onchange=recCamera;
+  $('recRes').onchange=recCamera; $('recFps').onchange=recCamera;
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('rec').hidden) recClose(); });
 }
 
