@@ -330,6 +330,10 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
         </div>
       </section>
 
+        <div class="trackbox" id="lightBox" hidden>
+          <label class="check"><input type="checkbox" id="light"> Tomar la luz de la escena</label>
+          <p class="note" id="lightNote"></p>
+        </div>
         <details class="more">
         <summary>Más ajustes: opacidad y fusión</summary>
         <div>
@@ -556,7 +560,8 @@ function bbox(P,W,H){
   const y0=Math.max(0,Math.floor(Math.min(...ys))),y1=Math.min(H,Math.ceil(Math.max(...ys)));
   return {x0,y0,w:x1-x0,h:y1-y0};
 }
-function warp(img,B,P,src,mode,op){
+/** gain (opcional): luz de la escena, una cuadrícula LN×LN de factores RGB sobre la superficie (ver measureLight). */
+function warp(img,B,P,src,mode,op,gain){
   const Mi=inv3(sq2q(P)), d=img.data, S_=src.d, sw=src.w, sh=src.h;
   for(let y=0;y<B.h;y++){ const Y=B.y0+y+.5;
     for(let x=0;x<B.w;x++){ const X=B.x0+x+.5;
@@ -567,9 +572,10 @@ function warp(img,B,P,src,mode,op){
       const i00=(iy*sw+ix)*4,i10=(iy*sw+ix1)*4,i01=(iy1*sw+ix)*4,i11=(iy1*sw+ix1)*4;
       const w00=(1-fx)*(1-fy)*S_[i00+3], w10=fx*(1-fy)*S_[i10+3], w01=(1-fx)*fy*S_[i01+3], w11=fx*fy*S_[i11+3];
       const A=w00+w10+w01+w11; if(A<=0)continue;
-      const r=(S_[i00]*w00+S_[i10]*w10+S_[i01]*w01+S_[i11]*w11)/A;
-      const gg=(S_[i00+1]*w00+S_[i10+1]*w10+S_[i01+1]*w01+S_[i11+1]*w11)/A;
-      const b=(S_[i00+2]*w00+S_[i10+2]*w10+S_[i01+2]*w01+S_[i11+2]*w11)/A;
+      let r=(S_[i00]*w00+S_[i10]*w10+S_[i01]*w01+S_[i11]*w11)/A;
+      let gg=(S_[i00+1]*w00+S_[i10+1]*w10+S_[i01+1]*w01+S_[i11+1]*w11)/A;
+      let b=(S_[i00+2]*w00+S_[i10+2]*w10+S_[i01+2]*w01+S_[i11+2]*w11)/A;
+      if(gain){ const k=gainAt(gain,u,v); r=Math.min(255,r*k[0]); gg=Math.min(255,gg*k[1]); b=Math.min(255,b*k[2]); }
       const a=A/255*op, o=(y*B.w+x)*4;
       if(mode==='write'){ d[o]=r; d[o+1]=gg; d[o+2]=b; d[o+3]=a*255; }
       else if(mode==='multiply'){ d[o]+= (d[o]*r/255-d[o])*a; d[o+1]+=(d[o+1]*gg/255-d[o+1])*a; d[o+2]+=(d[o+2]*b/255-d[o+2])*a; }
@@ -582,7 +588,7 @@ function warp(img,B,P,src,mode,op){
    Mismo resultado que warp(...,'write'): el contenido deformado sobre fondo transparente, con alfa premultiplicado.
    Hace falta para el seguimiento, donde la deformación cambia en cada fotograma. Si no hay WebGL, se usa warp(). */
 const GPU=(()=>{
-  let c=null,gl=null,ok=null,uM,uOp,uH,cur=null,maxT=0;
+  let c=null,gl=null,ok=null,uM,uOp,uH,uG,cur=null,maxT=0,texT=null,texG=null;
   function init(){
     ok=false;
     try{
@@ -593,27 +599,33 @@ const GPU=(()=>{
       const sh=(t,src)=>{const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error('shader');return o;};
       const pr=gl.createProgram();
       gl.attachShader(pr,sh(gl.VERTEX_SHADER,'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'));
-      gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,'precision highp float;uniform mat3 M;uniform float op,H;uniform sampler2D T;'+
+      gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,'precision highp float;uniform mat3 M;uniform float op,H,useG;uniform sampler2D T,G;'+
         'void main(){vec3 q=M*vec3(gl_FragCoord.x,H-gl_FragCoord.y,1.);if(q.z<=0.)discard;vec2 uv=q.xy/q.z;'+
-        'if(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.)discard;gl_FragColor=texture2D(T,uv)*op;}'));
+        'if(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.)discard;vec4 c=texture2D(T,uv)*op;'+
+        'if(useG>0.){c.rgb=min(c.rgb*texture2D(G,uv).rgb*4.,vec3(c.a));}gl_FragColor=c;}'));
       gl.linkProgram(pr); if(!gl.getProgramParameter(pr,gl.LINK_STATUS)) return; gl.useProgram(pr);
       gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
       const la=gl.getAttribLocation(pr,'a'); gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la,2,gl.FLOAT,false,0,0);
-      uM=gl.getUniformLocation(pr,'M'); uOp=gl.getUniformLocation(pr,'op'); uH=gl.getUniformLocation(pr,'H');
-      gl.bindTexture(gl.TEXTURE_2D,gl.createTexture());
-      [[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE],[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR]].forEach(([k,v])=>gl.texParameteri(gl.TEXTURE_2D,k,v));
+      uM=gl.getUniformLocation(pr,'M'); uOp=gl.getUniformLocation(pr,'op'); uH=gl.getUniformLocation(pr,'H'); uG=gl.getUniformLocation(pr,'useG');
+      gl.uniform1i(gl.getUniformLocation(pr,'T'),0); gl.uniform1i(gl.getUniformLocation(pr,'G'),1);
+      const tex=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t);
+        [[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE],[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR]].forEach(([k,v])=>gl.texParameteri(gl.TEXTURE_2D,k,v)); return t; };
+      gl.activeTexture(gl.TEXTURE1); texG=tex(); gl.activeTexture(gl.TEXTURE0); texT=tex();
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
       maxT=gl.getParameter(gl.MAX_TEXTURE_SIZE); ok=true;
     }catch(e){ ok=false; }
   }
   return {
     /** Canvas W×H con src deformado sobre las esquinas P (píxeles), o null si la GPU no está disponible. */
-    draw(P,W,H,src,op){
+    draw(P,W,H,src,op,gain){
       if(ok===null) init();
       if(!ok||gl.isContextLost()||Math.max(src.w,src.h,W,H)>maxT) return null;
       if(c.width!==W||c.height!==H){ c.width=W; c.height=H; }
       gl.viewport(0,0,W,H);
       if(cur!==src){ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,src.w,src.h,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(src.d.buffer,src.d.byteOffset,src.d.length)); cur=src; }
+      if(gain){ const b=new Uint8Array(LN*LN*3); for(let i=0;i<b.length;i++) b[i]=Math.max(0,Math.min(255,Math.round(gain[i]/4*255)));
+        gl.activeTexture(gl.TEXTURE1); gl.pixelStorei(gl.UNPACK_ALIGNMENT,1); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,LN,LN,0,gl.RGB,gl.UNSIGNED_BYTE,b); gl.activeTexture(gl.TEXTURE0); }
+      gl.uniform1f(uG,gain?1:0);
       const M=inv3(sq2q(P)), cx=(P[0].x+P[1].x+P[2].x+P[3].x)/4, cy=(P[0].y+P[1].y+P[2].y+P[3].y)/4;
       const sg=M[6]*cx+M[7]*cy+M[8]<0?-1:1; // así q.z>0 dentro de la superficie y no aparece un reflejo al otro lado del horizonte
       gl.uniformMatrix3fv(uM,false,[M[0],M[3],M[6],M[1],M[4],M[7],M[2],M[5],M[8]].map(v=>v*sg));
@@ -624,6 +636,96 @@ const GPU=(()=>{
     forget(){ cur=null; }
   };
 })();
+
+/* ---------- luz de la escena ----------
+   Se recorre el video a baja resolución (~10 veces por segundo) y se mide el color medio de la superficie en una
+   cuadrícula LN×LN. La "luz normal" de cada zona es su valor típico (mediana) en todo el video; en cada momento,
+   el letrero se multiplica por cuánto más clara, oscura o de otro tono está cada zona. Se suaviza en el tiempo para
+   que el ruido de la cámara o una mano que pasa un instante no lo hagan parpadear. */
+const LN=4, LIGHT={key:'',data:null,busy:null,busyKey:'',timer:0}, GBUF=new Float32Array(LN*LN*3);
+function gainAt(g,u,v){
+  let x=u*LN-.5,y=v*LN-.5; x=x<0?0:x>LN-1?LN-1:x; y=y<0?0:y>LN-1?LN-1:y;
+  const ix=Math.min(LN-2,x|0),iy=Math.min(LN-2,y|0),fx=x-ix,fy=y-iy,o=[];
+  for(let c=0;c<3;c++){ const a=g[(iy*LN+ix)*3+c],b=g[(iy*LN+ix+1)*3+c],d=g[((iy+1)*LN+ix)*3+c],e=g[((iy+1)*LN+ix+1)*3+c];
+    o.push((a+(b-a)*fx)*(1-fy)+(d+(e-d)*fx)*fy); }
+  return o;
+}
+const lightOn=()=>!!S.video&&$('light').checked&&blendMode()!=='multiply';
+const lightKey=()=>{ const V=S.video; return bgVer+'|'+(V&&V.track?'t'+V.trackVer:S.q.map(p=>p.x.toFixed(3)+','+p.y.toFixed(3)).join(';')); };
+/** Factores de luz en el segundo t (o null si la opción está apagada o todavía no se midió). */
+function lightGain(t){
+  if(!lightOn()) return null;
+  if(LIGHT.key!==lightKey()){ scheduleLight(); return null; }
+  const {T,G}=LIGHT.data, n=T.length, N=LN*LN*3; if(!n) return null;
+  let i=0,j=n-1; if(t<=T[0]) j=0; else if(t>=T[n-1]) i=n-1; else { while(j-i>1){ const m=(i+j)>>1; if(T[m]<=t) i=m; else j=m; } }
+  const f=i===j?0:(t-T[i])/(T[j]-T[i]);
+  for(let k=0;k<N;k++) GBUF[k]=G[i*N+k]+(G[j*N+k]-G[i*N+k])*f;
+  return GBUF;
+}
+function scheduleLight(){
+  if(drag||LIGHT.busy||!lightOn()) return;
+  clearTimeout(LIGHT.timer); LIGHT.timer=setTimeout(()=>{ measureLight().then(render,()=>{}); },400);
+}
+function setLNote(t,cls){ const n=$('lightNote'); n.textContent=t; n.style.color=cls==='bad'?'var(--bad)':''; }
+const LIGHT_TIP='El letrero se aclara, se oscurece y cambia de tono igual que la superficie durante el video, por ejemplo si pasa una sombra o se enciende una luz.';
+async function measureLight(){
+  const V=S.video; if(!V) return null;
+  const key=lightKey(); if(LIGHT.key===key&&LIGHT.data) return LIGHT.data;
+  if(LIGHT.busy&&LIGHT.busyKey===key) return LIGHT.busy;
+  LIGHT.busyKey=key;
+  LIGHT.busy=(async()=>{
+    const M=await loadMB(), track=await new M.Input({source:new M.BlobSource(V.file),formats:M.ALL_FORMATS}).getPrimaryVideoTrack();
+    const sc=Math.min(1,256/Math.max(track.displayWidth,track.displayHeight)), w=Math.max(8,Math.round(track.displayWidth*sc)), h=Math.max(8,Math.round(track.displayHeight*sc));
+    const sink=new M.CanvasSink(track,{width:w,height:h,fit:'fill',poolSize:1}), N=LN*LN*3, K=5;
+    const ts=[]; for(let t=0;t<Math.max(V.dur,.01);t+=.1) ts.push(t);
+    const T=[],C=[]; let i=0;
+    for await (const wc of sink.canvasesAtTimestamps(ts)){
+      if(S.video!==V) throw new Error('cancel');
+      const t=wc?wc.timestamp:ts[i]; i++; T.push(t);
+      const q=!wc?null:V.track?quadAt(t):S.q; if(!q){ C.push(null); continue; }
+      const d=wc.canvas.getContext('2d').getImageData(0,0,w,h).data, Hm=sq2q(q.map(p=>({x:p.x*w,y:p.y*h}))), cell=new Float32Array(N).fill(NaN);
+      for(let cy=0;cy<LN;cy++) for(let cx=0;cx<LN;cx++){
+        let r=0,g=0,b=0,c=0;
+        for(let a=0;a<K;a++) for(let e=0;e<K;e++){
+          const p=mapPt(Hm,(cx+(e+.5)/K)/LN,(cy+(a+.5)/K)/LN), x=Math.round(p.x), y=Math.round(p.y);
+          if(x<0||y<0||x>=w||y>=h) continue; const o=(y*w+x)*4; r+=d[o]; g+=d[o+1]; b+=d[o+2]; c++;
+        }
+        if(c>=K) { const o=(cy*LN+cx)*3; cell[o]=r/c; cell[o+1]=g/c; cell[o+2]=b/c; }
+      }
+      C.push(cell);
+      if(i%10===0) setLNote('Midiendo la luz del video… '+Math.round(100*i/ts.length)+' %');
+    }
+    // luz normal: mediana de cada zona y canal
+    const med=a=>{ a=a.filter(Number.isFinite).sort((x,y)=>x-y); return a.length?a[a.length>>1]:NaN; };
+    const ref=new Float32Array(N); for(let k=0;k<N;k++) ref[k]=med(C.map(c=>c?c[k]:NaN));
+    // factor por momento: (actual+8)/(normal+8) para que una superficie muy oscura no dé factores locos
+    const n=T.length, G=new Float32Array(n*N).fill(NaN);
+    for(let t=0;t<n;t++){ const c=C[t]; if(!c) continue;
+      for(let ch=0;ch<3;ch++){
+        const gs=[]; for(let z=0;z<LN*LN;z++){ const k=z*3+ch; if(Number.isFinite(c[k])&&Number.isFinite(ref[k])) gs.push((c[k]+8)/(ref[k]+8)); }
+        if(!gs.length) continue; const m=med(gs);
+        for(let z=0;z<LN*LN;z++){ const k=z*3+ch; const g=Number.isFinite(c[k])&&Number.isFinite(ref[k])?(c[k]+8)/(ref[k]+8):m;
+          G[t*N+k]=Math.max(.25,Math.min(3,m*Math.max(.6,Math.min(1.6,g/m)))); } // las zonas no se alejan demasiado del total
+      }
+    }
+    // huecos (superficie fuera del encuadre): el valor más cercano; y suavizado: mediana de ±2 muestras y luego promedio de ±1
+    for(let k=0;k<N;k++){
+      let last=NaN; for(let t=0;t<n;t++){ const v=G[t*N+k]; if(Number.isFinite(v)) last=v; else if(Number.isFinite(last)) G[t*N+k]=last; }
+      last=NaN; for(let t=n-1;t>=0;t--){ const v=G[t*N+k]; if(Number.isFinite(v)) last=v; else G[t*N+k]=Number.isFinite(last)?last:1; }
+      const a=Array.from({length:n},(_,t)=>G[t*N+k]), m=a.map((_,t)=>med(a.slice(Math.max(0,t-2),t+3)));
+      for(let t=0;t<n;t++){ let s=0,c=0; for(let o=-1;o<=1;o++) if(t+o>=0&&t+o<n){ s+=m[t+o]; c++; } G[t*N+k]=s/c; }
+    }
+    return {T:Float64Array.from(T),G};
+  })();
+  try{ const data=await LIGHT.busy; if(LIGHT.busyKey===key){ LIGHT.data=data; LIGHT.key=key; } setLNote(LIGHT_TIP); return data; }
+  catch(e){ if(e&&e.message!=='cancel') setLNote('No pude medir la luz de este video.','bad'); throw e; }
+  finally{ LIGHT.busy=null; }
+}
+function updLightUI(){
+  const V=S.video; $('lightBox').hidden=!V; if(!V) return;
+  if(!LIGHT.busy) setLNote($('light').checked&&blendMode()==='multiply'?'Con la fusión "Impreso" el letrero ya toma la luz de la superficie por sí solo.':LIGHT_TIP);
+}
+$('light').addEventListener('change',()=>{ updLightUI(); if(lightOn()) measureLight().then(render,()=>{}); render(); });
 
 /* ---------- fusión ---------- */
 const lum=hex=>{const n=parseInt(hex.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});return .2126*c[0]+.7152*c[1]+.0722*c[2];};
@@ -721,16 +823,16 @@ function contentKey(P){
 }
 /** Devuelve un canvas (transparente, del tamaño de la vista) con el contenido deformado. Solo lo recalcula cuando algo cambió.
     SP: esquinas que definen la forma del contenido (con seguimiento, las del momento marcado, para que el texto no cambie). */
-function updateLayer(P,W,H,SP){
+function updateLayer(P,W,H,SP,gain){
   const key=contentKey(SP);
   if(key!==pvKey){ pvSrc=getSource(SP,1600); pvKey=key; layerKey=''; }
-  const lk=key+'|'+P.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(';')+'|'+W+'x'+H+'|'+$('op').value;
+  const lk=key+'|'+P.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(';')+'|'+W+'x'+H+'|'+$('op').value+'|'+(gain?Array.from(gain,v=>v.toFixed(2)).join(','):'');
   if(lk===layerKey&&layerCv) return layerCv;
-  layerCv=GPU.draw(P,W,H,pvSrc,$('op').value/100);
+  layerCv=GPU.draw(P,W,H,pvSrc,$('op').value/100,gain);
   if(!layerCv){
     if(LAYER.width!==W||LAYER.height!==H){ LAYER.width=W; LAYER.height=H; } else LCTX.clearRect(0,0,W,H);
     const B=bbox(P,W,H);
-    if(B.w>0&&B.h>0){ const img=LCTX.createImageData(B.w,B.h); warp(img,B,P,pvSrc,'write',$('op').value/100); LCTX.putImageData(img,B.x0,B.y0); }
+    if(B.w>0&&B.h>0){ const img=LCTX.createImageData(B.w,B.h); warp(img,B,P,pvSrc,'write',$('op').value/100,gain); LCTX.putImageData(img,B.x0,B.y0); }
     layerCv=LAYER;
   }
   layerKey=lk; return layerCv;
@@ -761,7 +863,7 @@ function draw(){
     let a=1;
     if(V){ a=timeAlpha(V.el.currentTime); if(!playing&&a<.3) a=.3; }
     if(lost) a=0;
-    if(a>0){ let L=updateLayer(P,W,H,SP);
+    if(a>0){ let L=updateLayer(P,W,H,SP,V?lightGain(curT()):null);
       if($('occ').checked&&SEG){
         // al reproducir, como mucho ~15 veces por segundo para no trabar la reproducción en celulares lentos
         const k=bgVer+'|'+(V?curT():0)+'|'+W+'x'+H+'|'+P.map(p=>p.x.toFixed(0)+','+p.y.toFixed(0)).join(';'), now=performance.now();
@@ -992,7 +1094,7 @@ const loadMB=async()=>MB||(MB=await import('./vendor/mediabunny.min.js'));
 function dropVideo(){
   if(S.video){ const V=S.video; V.dead=true; try{V.el.pause();V.el.removeAttribute('src');V.el.load();V.el.remove();URL.revokeObjectURL(V.url);}catch(e){} }
   S.video=null; $('editor').hidden=true; $('vidExp').hidden=true; stage.classList.remove('playing');
-  $('ltag').hidden=true; $('tmsg').textContent=''; updTrackUI(); drawTrk();
+  $('ltag').hidden=true; $('tmsg').textContent=''; updTrackUI(); drawTrk(); LIGHT.key=''; LIGHT.data=null; updLightUI();
   $('expFull').textContent='Foto completa (JPG)'; $('expFull').classList.add('primary');
   $('imgExp').classList.add('flat'); $('imgExp').open=true;
 }
@@ -1028,7 +1130,7 @@ async function loadVideo(f){
     $('editor').hidden=false; $('vidExp').hidden=false; $('expFull').textContent='Este fotograma (JPG)'; $('expFull').classList.remove('primary');
     $('imgExp').classList.remove('flat'); $('imgExp').open=false;
     $('tag').hidden=true; $('result').hidden=true;
-    updTrackUI(); layout();
+    updTrackUI(); updLightUI(); layout();
     setMsg('');
     await seekTo(Math.min(.05,V.dur/2));
     buildFilm(V);
@@ -1194,7 +1296,7 @@ async function runTrack(){
         const el=(performance.now()-t0)/1000, left=p>.04?el*(1-p)/p:0;
         setTMsg('Analizando el video… '+Math.round(p*100)+' %'+(left>8?' (unos '+(left<90?Math.round(left/5)*5+' s':Math.round(left/60)+' min')+')':'')); }});
     if(V.dead||job.cancel) throw Object.assign(new Error('cancel'),{name:'Cancel'});
-    V.track=res; V.stale=V.kv!==kv; ok=true;
+    V.track=res; V.trackVer=(V.trackVer||0)+1; V.stale=V.kv!==kv; ok=true;
     const pct=Math.round(res.found*100);
     if(res.found<.03) setTMsg('No pude seguir la superficie. Prueba marcando las esquinas en otro momento, donde se vea más nítida y de frente.','bad');
     else setTMsg('Listo: la superficie aparece en el '+pct+' % del video (la franja verde bajo la película). Dale play para revisarlo.','ok');
@@ -1243,11 +1345,11 @@ async function exportVideo(){
     // Capa con el contenido deformado: una sola vez si la cámara está quieta, en cada fotograma si hay seguimiento.
     const layer=mk(W,H), lg=layer.getContext('2d',{willReadFrequently:true}), op=$('op').value/100, tracked=!!V.track;
     const px=q=>q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(px(shapeQ()),4096);
-    const cpu=P=>{ lg.clearRect(0,0,W,H); const B=bbox(P,W,H);
-      if(B.w>0&&B.h>0){ const img=lg.createImageData(B.w,B.h); warp(img,B,P,src,'write',op); lg.putImageData(img,B.x0,B.y0); }
+    const cpu=(P,gain)=>{ lg.clearRect(0,0,W,H); const B=bbox(P,W,H);
+      if(B.w>0&&B.h>0){ const img=lg.createImageData(B.w,B.h); warp(img,B,P,src,'write',op,gain); lg.putImageData(img,B.x0,B.y0); }
       return layer; };
-    const paint=P=>GPU.draw(P,W,H,src,op)||cpu(P);
-    const still=tracked?null:cpu(px(S.q));
+    const paint=(P,gain)=>GPU.draw(P,W,H,src,op,gain)||cpu(P,gain);
+    const lit=lightOn()&&!!(await measureLight().catch(()=>null)), still=tracked||lit?null:cpu(px(S.q));
     const mult=blendMode()==='multiply', occ=$('occ').checked&&!!(await loadSeg().catch(()=>null)), EMASK=mk(1,1), ETMP=mk(1,1);
     const alphaAt=timeAlpha;
     const c=mk(W,H), g=c.getContext('2d');
@@ -1263,7 +1365,7 @@ async function exportVideo(){
         g.globalCompositeOperation='source-over'; g.globalAlpha=1;
         sample.draw(g,0,0,W,H);
         let a=alphaAt(sample.timestamp), L=still;
-        if(a>0&&tracked){ const q=quadAt(sample.timestamp); if(q) L=paint(px(q)); else a=0; }
+        if(a>0&&(tracked||lit)){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=paint(px(q),lit?lightGain(sample.timestamp):null); else a=0; }
         if(a>0&&occ){ const q=tracked?quadAt(sample.timestamp):S.q; if(q) L=occlude(L,personMask(c,W,H,px(q),W,H,EMASK),W,H,ETMP); }
         if(a>0){ g.globalAlpha=a; g.globalCompositeOperation=mult?'multiply':'source-over'; g.drawImage(L,0,0); }
         return c;
@@ -1320,6 +1422,7 @@ $('align').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 $('sw').addEventListener('click',e=>{const b=e.target.closest('.sw');if(!b)return;S.color=b.dataset.c;[...$('sw').querySelectorAll('.sw')].forEach(x=>x.setAttribute('aria-pressed',x===b));render();});
 $('cpick').addEventListener('input',e=>{S.color=e.target.value;[...$('sw').querySelectorAll('.sw')].forEach(x=>x.setAttribute('aria-pressed','false'));render();});
 ['txt','sub','subsize','subcaps','size','vpos','op','shadow','outline','blend'].forEach(id=>$(id).addEventListener('input',render));
+$('blend').addEventListener('input',updLightUI);
 ['txt','sub'].forEach(id=>$(id).addEventListener('input',()=>{S.prog.content=true;}));
 ['font','subfont'].forEach(id=>$(id).addEventListener('change',async()=>{styleSel($('font'));styleSel($('subfont'));await loadFont();pvKey='';render();}));
 styleSel($('font')); styleSel($('subfont'));
@@ -1353,20 +1456,21 @@ async function exportIt(full){
     const c=mk(W,H), g=c.getContext('2d',{willReadFrequently:true});
     const P=S.q.map(p=>({x:p.x*W,y:p.y*H})), src=getSource(shapeQ().map(p=>({x:p.x*W,y:p.y*H})),4096);
     const B=S.video&&S.video.track&&!quadAt(curT())?{w:0,h:0}:bbox(P,W,H); // sin la superficie en este fotograma, sin letrero
+    const gain=S.video?lightGain(curT()):null, gainC=gain&&Float32Array.from(gain);
     const occ=$('occ').checked&&SEG&&B.w>0&&B.h>0;
     if(occ){ // el contenido va en una capa aparte para recortar a las personas antes de fusionarlo
       const lay=mk(W,H), lg=lay.getContext('2d',{willReadFrequently:true}), img=lg.createImageData(B.w,B.h);
-      warp(img,B,P,src,'write',$('op').value/100); lg.putImageData(img,B.x0,B.y0);
+      warp(img,B,P,src,'write',$('op').value/100,gainC); lg.putImageData(img,B.x0,B.y0);
       const O=occlude(lay,personMask(S.bg,S.bgW,S.bgH,P,W,H,mk(1,1)),W,H,mk(1,1)); free(lay);
       if(full){ g.drawImage(S.bg,0,0,W,H); g.globalCompositeOperation=blendMode()==='multiply'?'multiply':'source-over'; }
       g.drawImage(O,0,0); g.globalCompositeOperation='source-over'; free(O);
       const blob=await new Promise(r=>c.toBlob(r,full?'image/jpeg':'image/png',.93)); free(c); await save(blob,full?'oblicua.jpg':'oblicua-contenido.png');
     } else if(full){
       g.drawImage(S.bg,0,0,W,H);
-      if(B.w>0&&B.h>0){ const img=g.getImageData(B.x0,B.y0,B.w,B.h); warp(img,B,P,src,blendMode(),$('op').value/100); g.putImageData(img,B.x0,B.y0); }
+      if(B.w>0&&B.h>0){ const img=g.getImageData(B.x0,B.y0,B.w,B.h); warp(img,B,P,src,blendMode(),$('op').value/100,gainC); g.putImageData(img,B.x0,B.y0); }
       const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.93)); free(c); await save(blob,'oblicua.jpg');
     } else {
-      if(B.w>0&&B.h>0){ const img=g.createImageData(B.w,B.h); warp(img,B,P,src,'write',$('op').value/100); g.putImageData(img,B.x0,B.y0); }
+      if(B.w>0&&B.h>0){ const img=g.createImageData(B.w,B.h); warp(img,B,P,src,'write',$('op').value/100,gainC); g.putImageData(img,B.x0,B.y0); }
       const blob=await new Promise(r=>c.toBlob(r,'image/png')); free(c); await save(blob,'oblicua-contenido.png');
     }
   }catch(e){ setMsg('No se pudo generar la imagen. Prueba con una foto más pequeña.','bad'); }
