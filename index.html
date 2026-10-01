@@ -262,6 +262,7 @@ input[type=number]:focus-visible{outline:3px solid var(--accent);outline-offset:
         <div class="trackbox" id="trackSec" hidden>
         <span class="l">¿La cámara se mueve?</span>
         <p class="note" id="tnote"></p>
+        <label class="check"><input type="checkbox" id="refl"> Es lisa o refleja (pantalla apagada, vidrio, espejo)</label>
         <div class="row">
           <button class="btn primary grow" type="button" id="trackBtn">Seguir la superficie</button>
           <button class="btn" type="button" id="trackCancel" hidden>Cancelar</button>
@@ -1077,7 +1078,7 @@ function updTrackUI(){
   $('trackBtn').hidden=busy||(has&&!V.stale); $('trackCancel').hidden=!busy; $('tprog').hidden=!busy; $('trackOff').hidden=busy||!has;
   $('trackBtn').textContent=has?'Actualizar seguimiento':'Seguir la superficie';
   $('tnote').textContent=!has?'Oblicua puede mover los puntos sola para que el letrero siga a la superficie en todo el video, aunque salga del encuadre y vuelva. Primero coloca los 4 puntos en un momento donde se vea bien y luego pulsa el botón.'
-    :V.stale?'Corregiste '+(n>1?n+' momentos':'un momento')+'. Pulsa "Actualizar seguimiento" para aplicarlo a todo el video.'
+    :V.stale?(n>0?'Corregiste '+(n>1?n+' momentos':'un momento'):'Cambiaste una opción')+'. Pulsa "Actualizar seguimiento" para aplicarlo a todo el video.'
     :'El letrero sigue a la superficie. Si en algún momento se desvía, pausa ahí, arrastra los puntos a su sitio y actualiza.';
   $('vnote').textContent='Mantiene el audio original.'+(has?' El letrero sigue a la superficie mientras la cámara se mueve.':' Si la cámara se mueve, usa antes "Seguir la superficie" (paso 2).');
   $('expVid').disabled=busy;
@@ -1109,7 +1110,7 @@ async function runTrack(){
     const [M,T]=await Promise.all([loadMB(),loadTRK()]);
     // el primer momento marcado va primero: define la superficie para todos los demás
     const keys=[...V.keys].sort((a,b)=>b.main-a.main).map(k=>({t:k.t,q:k.q.map(p=>({...p}))})), kv=V.kv, t0=performance.now();
-    const res=await T.analyze({M,file:V.file,keys,cancelled:()=>job.cancel||V.dead,
+    const res=await T.analyze({M,file:V.file,keys,reflective:$('refl').checked,cancelled:()=>job.cancel||V.dead,
       onProgress:p=>{ $('tprogBar').style.width=Math.round(p*100)+'%';
         const el=(performance.now()-t0)/1000, left=p>.04?el*(1-p)/p:0;
         setTMsg('Analizando el video… '+Math.round(p*100)+' %'+(left>8?' (unos '+(left<90?Math.round(left/5)*5+' s':Math.round(left/60)+' min')+')':'')); }});
@@ -1130,6 +1131,9 @@ async function runTrack(){
   return ok;
 }
 $('trackBtn').onclick=runTrack;
+// Una pantalla apagada o un vidrio no tienen textura propia, solo reflejos que se mueven distinto: con esta opción
+// el seguimiento ignora el interior y sigue el marco y lo que rodea la superficie.
+$('refl').addEventListener('change',()=>{ const V=S.video; if(V&&V.track){ V.stale=true; V.kv=(V.kv||0)+1; updTrackUI(); } });
 $('trackCancel').onclick=()=>{ const V=S.video; if(V&&V.tracking) V.tracking.cancel=true; };
 $('trackOff').onclick=()=>{ clearTrack(); setTMsg('Seguimiento quitado: el letrero vuelve a quedarse fijo.'); };
 

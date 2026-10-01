@@ -12,6 +12,11 @@ const LEVELS=4;      // niveles de la pirámide para el flujo óptico
 const R=4;           // radio de la ventana de Lucas-Kanade (9×9)
 const ITERS=12;
 const MARGIN=.12;    // fracción alrededor de la superficie que también se usa (la pared es el mismo plano)
+// Zona donde se buscan puntos, en coordenadas de la superficie: hasta m por fuera y, si hole>0, sin el interior
+// [hole, 1-hole]. Una superficie lisa o que refleja (pantalla apagada, vidrio) no tiene textura propia: lo que se ve
+// son reflejos, que se mueven distinto que ella. Ahí se sigue el marco y lo que la rodea.
+const ZONE={m:MARGIN,hole:0};
+export function setReflective(on){ZONE.m=on?.3:MARGIN;ZONE.hole=on?-.03:0;}
 const MIN_EIG=1.5;   // textura mínima en la ventana para poder seguir un punto
 const MAX_PTS=120;
 
@@ -195,13 +200,13 @@ function corners(L,reg,maxN,cell,avoid){
 }
 
 /** Zona de la superficie (más el margen) en el fotograma, recortada a la imagen. */
-function region(H,w,h,border,m=MARGIN){
+function region(H,w,h,border,m=ZONE.m){
   const Hi=hInv(H),c=hApply(H,.5,.5),sg=Math.sign(Hi[6]*c[0]+Hi[7]*c[1]+Hi[8]);
   let X0=1e9,Y0=1e9,X1=-1e9,Y1=-1e9;
   for(const[u,v]of[[-m,-m],[1+m,-m],[1+m,1+m],[-m,1+m]]){const p=hApply(H,u,v);if(!isFinite(p[0])||!isFinite(p[1]))return null;X0=Math.min(X0,p[0]);Y0=Math.min(Y0,p[1]);X1=Math.max(X1,p[0]);Y1=Math.max(Y1,p[1]);}
   const x0=Math.max(border,Math.floor(X0)),y0=Math.max(border,Math.floor(Y0)),x1=Math.min(w-1-border,Math.ceil(X1)),y1=Math.min(h-1-border,Math.ceil(Y1));
   if(x1-x0<6||y1-y0<6)return null;
-  const test=(x,y)=>{const d=Hi[6]*x+Hi[7]*y+Hi[8];if(d*sg<=0)return false;const u=(Hi[0]*x+Hi[1]*y+Hi[2])/d,v=(Hi[3]*x+Hi[4]*y+Hi[5])/d;return u>=-m&&u<=1+m&&v>=-m&&v<=1+m;};
+  const test=(x,y)=>{const d=Hi[6]*x+Hi[7]*y+Hi[8];if(d*sg<=0)return false;const u=(Hi[0]*x+Hi[1]*y+Hi[2])/d,v=(Hi[3]*x+Hi[4]*y+Hi[5])/d;if(u<-m||u>1+m||v<-m||v>1+m)return false;const k=ZONE.hole;return !(k&&u>k&&u<1-k&&v>k&&v<1-k);};
   return{x0,y0,x1,y1,test,Hi};
 }
 
@@ -288,7 +293,99 @@ export function buildRef(gray,w,h,quad){
   for(let i=0;i<F.n;i++){const p=hApply(Hi,F.x[i],F.y[i]);u[i]=p[0];v[i]=p[1];}
   const reg2=region(H,w,h,R+2),pts=[];
   if(reg2)for(const[x,y]of corners(pyr[0],reg2,260,7,null)){const p=hApply(Hi,x,y);pts.push(p[0],p[1]);}
-  return{pyr,H,ori,F:{...F,u,v},pts:Float32Array.from(pts),w,h};
+  return{pyr,H,ori,F:{...F,u,v},pts:Float32Array.from(pts),w,h,edges:ZONE.hole?learnEdges(pyr[0],H):null};
+}
+
+/* ---------- bordes: para superficies lisas o que reflejan ----------
+   Una pantalla apagada casi no tiene textura propia, pero su marco contra la pared es un borde muy marcado.
+   En la referencia se aprende, para cada lado, dónde está el borde más fuerte cerca de lo marcado y si pasa de
+   oscuro a claro o al revés; en cada fotograma se busca ese borde y se ajusta H para que los 4 lados calcen. */
+const SIDES=[{a:[0,0],b:[1,0],n:[0,-1]},{a:[1,0],b:[1,1],n:[1,0]},{a:[1,1],b:[0,1],n:[0,1]},{a:[0,1],b:[0,0],n:[-1,0]}];
+const ES=28; // muestras por lado
+function sidePt(H,s,t,off){
+  const S=SIDES[s],u=S.a[0]+(S.b[0]-S.a[0])*t+S.n[0]*off,v=S.a[1]+(S.b[1]-S.a[1])*t+S.n[1]*off;
+  const p=hApply(H,u,v),q=hApply(H,u+S.n[0]*.01,v+S.n[1]*.01);let nx=q[0]-p[0],ny=q[1]-p[1];const L=Math.hypot(nx,ny)||1;
+  return{u,v,x:p[0],y:p[1],nx:nx/L,ny:ny/L};
+}
+const edgeAt=(L,x,y,nx,ny)=>samp(L.I,L.w,L.h,x+nx,y+ny)-samp(L.I,L.w,L.h,x-nx,y-ny);
+function learnEdges(L,H){
+  const offs=[];for(let o=-.08;o<=.0801;o+=.004)offs.push(o);
+  return[0,1,2,3].map(s=>{
+    const acc=new Float64Array(offs.length),sg=new Float64Array(offs.length),cnt=new Float64Array(offs.length);
+    for(let k=0;k<ES;k++)for(let j=0;j<offs.length;j++){
+      const f=sidePt(H,s,(k+.5)/ES,offs[j]);if(f.x<3||f.y<3||f.x>L.w-4||f.y>L.h-4)continue;
+      const g=edgeAt(L,f.x,f.y,f.nx,f.ny);acc[j]+=Math.abs(g);sg[j]+=g;cnt[j]++;
+    }
+    let bj=-1,bv=0;for(let j=0;j<offs.length;j++){if(cnt[j]<ES/3)continue;const v=Math.abs(sg[j])/cnt[j]*(1-Math.abs(offs[j])*3);if(v>bv){bv=v;bj=j;}}
+    return bj>=0&&bv>6?{off:offs[bj],pol:Math.sign(sg[bj])}:null;
+  });
+}
+/** Busca los bordes aprendidos cerca de H0 y ajusta H (Gauss-Newton sobre la distancia de cada borde a su lado).
+    De lo grueso a lo fino: primero en un nivel reducido de la pirámide (alcance ~40 px), luego en la imagen completa. */
+function edgeTrack(pyr,H0,ref,wide){
+  const ed=ref.edges;if(!ed||ed.filter(Boolean).length<2)return null;
+  let H=Float64Array.from(H0,v=>v/H0[8]),per=null,cnt=0;
+  const C0=hQuad(H); // las esquinas de partida: sujetan lo que los bordes no fijan (con 3 lados quedan 2 grados libres)
+  const stages=(wide?[[2,18],[1,6],[0,4],[0,2]]:[[0,12],[0,5],[0,2]]).filter(([l])=>l<pyr.length);
+  for(const[lv,Rs]of stages){
+    const L=pyr[lv],{w,h}=L,k=1/(1<<lv);
+    // H en coordenadas del nivel: x_l = x·k (el píxel i del nivel cae sobre 2^l·i)
+    const Hl=Float64Array.of(H[0]*k,H[1]*k,H[2]*k,H[3]*k,H[4]*k,H[5]*k,H[6],H[7],H[8]);
+    const M=[];
+    for(let s=0;s<4;s++){const e=ed[s];if(!e)continue;
+      for(let q=0;q<ES;q++){const f=sidePt(Hl,s,(q+.5)/ES,e.off);
+        if(f.x<Rs+3||f.y<Rs+3||f.x>w-Rs-4||f.y>h-Rs-4)continue;
+        let bd=0,bv=-1e9;
+        for(let d=-Rs;d<=Rs;d+=.5){const g=e.pol*edgeAt(L,f.x+f.nx*d,f.y+f.ny*d,f.nx,f.ny),sc=g-(Rs>12?.25:.6)*Math.abs(d);if(sc>bv){bv=sc;bd=d;}}
+        const g0=e.pol*edgeAt(L,f.x+f.nx*bd,f.y+f.ny*bd,f.nx,f.ny);if(g0<10)continue;
+        const gm=e.pol*edgeAt(L,f.x+f.nx*(bd-.5),f.y+f.ny*(bd-.5),f.nx,f.ny),gp=e.pol*edgeAt(L,f.x+f.nx*(bd+.5),f.y+f.ny*(bd+.5),f.nx,f.ny),den=gm-2*g0+gp;
+        if(den<0)bd+=Math.max(-.5,Math.min(.5,.25*(gm-gp)/den));
+        M.push({s,u:f.u,v:f.v,mx:f.x+f.nx*bd,my:f.y+f.ny*bd,nx:f.nx,ny:f.ny});
+      }}
+    if(M.length<12)return null;
+    for(let it=0;it<10;it++){
+      const A=new Float64Array(64),b=new Float64Array(8),J=new Float64Array(8),c=Math.max(1.5,Rs+1)*(it<3?1:.5);
+      for(const m of M){
+        const W=Hl[6]*m.u+Hl[7]*m.v+1,x=(Hl[0]*m.u+Hl[1]*m.v+Hl[2])/W,y=(Hl[3]*m.u+Hl[4]*m.v+Hl[5])/W,r=m.nx*(x-m.mx)+m.ny*(y-m.my);
+        if(Math.abs(r)>c)continue;const wt=(1-(r/c)**2)**2,q=m.nx*x+m.ny*y;
+        J[0]=m.nx*m.u/W;J[1]=m.nx*m.v/W;J[2]=m.nx/W;J[3]=m.ny*m.u/W;J[4]=m.ny*m.v/W;J[5]=m.ny/W;J[6]=-q*m.u/W;J[7]=-q*m.v/W;
+        for(let p=0;p<8;p++){b[p]+=wt*J[p]*r;for(let z=0;z<8;z++)A[p*8+z]+=wt*J[p]*J[z];}
+      }
+      const lam=.03;
+      for(let c=0;c<4;c++){const u=c===1||c===2?1:0,v=c>=2?1:0,W=Hl[6]*u+Hl[7]*v+1,x=(Hl[0]*u+Hl[1]*v+Hl[2])/W,y=(Hl[3]*u+Hl[4]*v+Hl[5])/W;
+        for(const ax of[0,1]){const r=ax?y-C0[2*c+1]*k:x-C0[2*c]*k,q=ax?y:x;J.fill(0);
+          if(ax){J[3]=u/W;J[4]=v/W;J[5]=1/W;}else{J[0]=u/W;J[1]=v/W;J[2]=1/W;}J[6]=-q*u/W;J[7]=-q*v/W;
+          for(let p=0;p<8;p++){b[p]+=lam*J[p]*r;for(let z=0;z<8;z++)A[p*8+z]+=lam*J[p]*J[z];}}}
+      for(let p=0;p<8;p++)A[p*9]+=A[p*9]*1e-3+1e-9;
+      const d=solve8(A,b);if(!d)return null;
+      for(let p=0;p<8;p++)Hl[p]-=d[p];
+      let mv=0;for(const[u,v]of[[0,0],[1,1]]){const W=Hl[6]*u+Hl[7]*v+1;mv=Math.max(mv,Math.abs(d[0]*u+d[1]*v+d[2])/W,Math.abs(d[3]*u+d[4]*v+d[5])/W);}
+      if(mv<.01)break;
+    }
+    H=Float64Array.of(Hl[0]/k,Hl[1]/k,Hl[2]/k,Hl[3]/k,Hl[4]/k,Hl[5]/k,Hl[6],Hl[7],Hl[8]);
+    per=[0,0,0,0];cnt=0;
+    for(const m of M){const W=Hl[6]*m.u+Hl[7]*m.v+1,x=(Hl[0]*m.u+Hl[1]*m.v+Hl[2])/W,y=(Hl[3]*m.u+Hl[4]*m.v+Hl[5])/W;if(Math.abs(m.nx*(x-m.mx)+m.ny*(y-m.my))<1.5){per[m.s]++;cnt++;}}
+  }
+  // hacen falta al menos 3 lados bien vistos (o 2 si son contiguos: dos lados perpendiculares fijan la posición)
+  const good=per.map(c=>c>=ES/4);const ng=good.filter(Boolean).length;
+  if(ng<2||(ng===2&&(good[0]&&good[2]||good[1]&&good[3])))return null;
+  return H.every(Number.isFinite)?{H,cnt,full:per.filter(c=>c>=ES*.6).length}:null;
+}
+
+/** Parecido (correlación normalizada, -1…1) entre la franja que rodea la superficie aquí y en la referencia.
+    Sirve para descartar un ajuste de bordes que se enganchó a otra cosa (un reflejo, un mueble). */
+function ringNCC(pyr,H,ref){
+  const L=pyr[0],R0=ref.pyr[0],a=[],b=[];
+  for(let s=0;s<4;s++)for(let q=0;q<40;q++)for(const o of[.012,.03,.05,.08]){
+    const S=SIDES[s],t=(q+.5)/40,u=S.a[0]+(S.b[0]-S.a[0])*t+S.n[0]*o,v=S.a[1]+(S.b[1]-S.a[1])*t+S.n[1]*o;
+    const p=hApply(H,u,v),r=hApply(ref.H,u,v);
+    if(p[0]<1||p[1]<1||p[0]>L.w-2||p[1]>L.h-2||r[0]<1||r[1]<1||r[0]>R0.w-2||r[1]>R0.h-2)continue;
+    a.push(samp(L.I,L.w,L.h,p[0],p[1]));b.push(samp(R0.I,R0.w,R0.h,r[0],r[1]));
+  }
+  const n=a.length;if(n<80)return 0;
+  let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;
+  let sab=0,saa=0,sbb=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;sab+=x*y;saa+=x*x;sbb+=y*y;}
+  return saa>1e-6&&sbb>1e-6?sab/Math.sqrt(saa*sbb):0;
 }
 
 /** Afina H contra la imagen de referencia: así no se acumula error de un fotograma a otro. */
@@ -342,7 +439,7 @@ function relate(A,B,rand){
 
 /* ---------- seguidor fotograma a fotograma ---------- */
 export class Tracker{
-  constructor(w,h,refs){this.w=w;this.h=h;this.refs=refs;this.rand=rng(99);this.H=null;this.Hp=null;this.pts=null;this.prev=null;this.lost=0;this.age=0;this.ref=0;this.coast=[];}
+  constructor(w,h,refs){this.w=w;this.h=h;this.refs=refs;this.rand=rng(99);this.H=null;this.Hp=null;this.pts=null;this.prev=null;this.lost=0;this.age=0;this.ref=0;this.coast=[];this.weak=0;}
   /** gray: Uint8Array del fotograma. key: {H,ref} si en este fotograma hay esquinas marcadas a mano. */
   step(gray,key){
     const{w,h}=this,I=new Float32Array(w*h);for(let i=0;i<w*h;i++)I[i]=gray[i];
@@ -362,6 +459,19 @@ export class Tracker{
         if(a&&jump(a.H,res.H,w,h)<.04){H=a.H;score=a.cnt;}else{H=res.H;score=res.cnt*.5;}
       }
     }
+    // Superficie lisa o que refleja: los bordes mandan (desde lo que dio el flujo, o desde la posición anterior)
+    if(ZONE.hole&&!key&&this.H){
+      const ori=this.refs[this.ref].ori,bases=[H,this.H];
+      if(this.Hp){const P=hMul(hMul(this.H,hInv(this.Hp)),this.H);if(sane(P,w,h,ori)&&jump(P,this.H,w,h)<.2)bases.push(P);}
+      // varios puntos de partida, búsqueda corta y amplia; gana el que más se parece a la referencia alrededor
+      let best=null;const ref=this.refs[this.ref];
+      for(const b of bases){if(!b)continue;for(const wide of[false,true]){const e=edgeTrack(pyr,b,ref,wide);
+        if(!e||!sane(e.H,w,h,ori)||jump(e.H,this.H,w,h)>=.3)continue;e.ncc=ringNCC(pyr,e.H,ref);
+        if(!best||e.ncc>best.ncc)best=e;}}
+      if(best&&best.ncc>.5){H=best.H;score=Math.max(score,best.cnt);}
+      // si los bordes calzan a medias (se pudo haber ido a otra cosa), cada tanto se busca de nuevo en todo el fotograma
+      if(H&&score<ES*3&&++this.weak%3===0){const d=this.confirmDetect(pyr)||this.gridSearch(pyr,H);if(d&&d.cnt>score+ES/2){H=d.H;score=d.cnt;reset=true;}}
+    }
     // Un instante sin enganche (desenfoque por movimiento, algo que tapa): sigue con la misma velocidad
     // unos fotogramas. Solo se conservan si luego se vuelve a enganchar.
     let coasting=false;
@@ -372,8 +482,9 @@ export class Tracker{
     if(!H&&!key){
       this.dropCoast();this.lost++;
       if(this.lost<=4||this.lost%3===0){
-        const d=detect(pyr,this.refs,this.rand);
-        if(d){const a=anchor(pyr,d.H,this.refs[d.ref],this.rand);H=a?a.H:d.H;score=a?a.cnt:d.cnt*.5;this.ref=d.ref;reset=true;}
+        const d=ZONE.hole?null:detect(pyr,this.refs,this.rand);
+        if(ZONE.hole){const c=this.confirmDetect(pyr);if(c){H=c.H;score=c.cnt;reset=true;}}
+        else if(d){const a=anchor(pyr,d.H,this.refs[d.ref],this.rand);H=a?a.H:d.H;score=a?a.cnt:d.cnt*.5;this.ref=d.ref;reset=true;}
       }
     }
     const res={H,age:0,score};
@@ -389,6 +500,22 @@ export class Tracker{
     return res;
   }
   dropCoast(){for(const r of this.coast)r.H=null;this.coast=[];}
+  /** Superficie lisa: busca los bordes desde posiciones desplazadas alrededor de H (sin depender de la textura). */
+  gridSearch(pyr,H){
+    const{w,h}=this,ref=this.refs[this.ref],st=Math.max(w,h)*.09;let best=null;
+    for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++){if(!i&&!j)continue;
+      const T=Float64Array.of(1,0,i*st,0,1,j*st,0,0,1),e=edgeTrack(pyr,hMul(T,H),ref,true);
+      if(!e||e.full<3||!sane(e.H,w,h,ref.ori)||(best&&e.cnt<=best.cnt))continue;
+      if(ringNCC(pyr,e.H,ref)>=.85)best=e;}
+    return best;
+  }
+  /** Superficie lisa: hay pocos rasgos alrededor, así que una detección solo vale si los bordes la confirman. */
+  confirmDetect(pyr){
+    const{w,h}=this,d=detect(pyr,this.refs,this.rand);if(!d)return null;
+    const ref=this.refs[d.ref],a=anchor(pyr,d.H,ref,this.rand),e=edgeTrack(pyr,a?a.H:d.H,ref,true);
+    if(!e||e.full<3||!sane(e.H,w,h,ref.ori)||ringNCC(pyr,e.H,ref)<.85)return null;
+    this.ref=d.ref;return e;
+  }
   /** Puntos a seguir: los que siguen bien (reproyectados con H) más esquinas nuevas dentro de la superficie. */
   points(pyr,H,old,only){
     const{w,h}=this,reg=region(H,w,h,R+2);if(!reg)return null;
@@ -472,7 +599,11 @@ export function merge(T,proc,fw,bw,keyT,w,h,keyU=[]){
  * Analiza el video y devuelve dónde está la superficie en cada fotograma.
  * M: módulo de Mediabunny. keys: [{t, q:[{x,y}×4] normalizadas}]. onProgress(0…1). cancelled() → true para abortar.
  */
-export async function analyze({M,file,keys,onProgress=()=>{},cancelled=()=>false}){
+export async function analyze({M,file,keys,reflective=false,onProgress=()=>{},cancelled=()=>false}){
+  setReflective(reflective);
+  try{return await analyzeVideo({M,file,keys,onProgress,cancelled});}finally{setReflective(false);}
+}
+async function analyzeVideo({M,file,keys,onProgress,cancelled}){
   const input=new M.Input({source:new M.BlobSource(file),formats:M.ALL_FORMATS});
   const track=await input.getPrimaryVideoTrack();
   if(!track||!(await track.canDecode()))throw new Error('nodec');
